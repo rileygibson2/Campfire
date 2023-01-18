@@ -28,10 +28,4 @@ public class CallView extends View {
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void draw(Graphics2D g) {
-		drawComponents(g);
-	}
-
 }

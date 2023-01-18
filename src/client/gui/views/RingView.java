@@ -17,7 +17,7 @@ public class RingView extends View {
 	
 	public RingView() {
 		super(ViewType.Call, new Rectangle(0, 0, 100, 100));
-		Button b = new XboxButton(new Rectangle(45, 45, 10, 10), "A", new Color(89, 141, 19), new Color(112, 255, 12), this);
+		Button b = new XboxButton(new Rectangle(45, 45, 10, 20), "A", new Color(89, 141, 19), new Color(112, 255, 12), this);
 		components.add(b);
 		pulse = new Animation(b, Animations.PulseButton);
 	}
@@ -42,6 +42,7 @@ public class RingView extends View {
 
 	@Override
 	public void draw(Graphics2D g) {
+		drawComponentShadows(g);
 		if (pulse!=null&&pulse.isRunning()) { //Draw pulse animation
 			ScreenUtils.drawPulse(g, pulse);
 		}

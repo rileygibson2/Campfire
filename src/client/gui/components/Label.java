@@ -50,5 +50,6 @@ public class Label extends Component {
 	@Override
 	public void draw(Graphics2D g) {
 		ScreenUtils.drawLabel(g, this);
+		super.draw(g);
 	}
 }

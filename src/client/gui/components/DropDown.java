@@ -125,6 +125,6 @@ public class DropDown<E> extends Component {
 	@Override
 	public void draw(Graphics2D g) {
 		ScreenUtils.drawDropDown(g, this);
-		drawComponents(g);
+		super.draw(g);
 	}
 }

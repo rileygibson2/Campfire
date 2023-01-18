@@ -56,5 +56,8 @@ public abstract class View extends Element {
 
 	public ViewType getViewType() {return this.viewType;}
 
-	public abstract void draw(Graphics2D g);
+	public void draw(Graphics2D g) {
+		drawComponentShadows(g);
+		drawComponents(g);
+	}
 }

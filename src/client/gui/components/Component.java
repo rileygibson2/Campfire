@@ -14,16 +14,25 @@ public abstract class Component extends Element {
 	public int opacity;
 	public boolean selected;
 	
+	//Visual
+	public boolean hasShadow;
+	
 	public Component(Rectangle r, Element parent) {
 		super (r, parent);
 		this.r = r;
 		this.rO = new Rectangle(r.x, r.y, r.width, r.height);
 		opacity = 100;
 		selected = false;
+		hasShadow = false;
 	}
 
 	public int getOpacity() {
 		return (int) ((opacity/100)*255);
+	}
+	
+	public void draw(Graphics2D g) {
+		drawComponentShadows(g);
+		drawComponents(g);
 	}
 	
 	public void doClick(Point p) {selected = true;}
@@ -31,5 +40,4 @@ public abstract class Component extends Element {
 	public abstract void doHover();
 	public abstract void doUnhover();
 	public abstract void doKeyPress(KeyEvent k);
-	public abstract void draw(Graphics2D g);
 }

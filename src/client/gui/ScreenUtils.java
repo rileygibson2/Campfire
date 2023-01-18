@@ -10,11 +10,13 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 
 import client.gui.components.Button;
+import client.gui.components.Component;
 import client.gui.components.DropDown;
 import client.gui.components.Image;
 import client.gui.components.Label;
 import client.gui.components.TextBox;
 import client.gui.components.XboxButton;
+import general.Pair;
 import general.Point;
 import general.Rectangle;
 
@@ -84,38 +86,50 @@ public class ScreenUtils {
 	
 	public static void drawPulse(Graphics2D g, Animation a) {
 		if (!a.hasElements()) return;
-		System.out.println("ap: "+a.getElements().toString());
+		Element e = a.getTarget();
+		Rectangle r;
 		
 		for (Object o : a.getElements()) {
-			Point p = (Point) o;
-			Element e = a.getTarget();
-			Rectangle r = e.getRealRec();
-			r.x = 
-			drawOval(g, new Color(0, 255, 50, percToCol(p.x)), r);
+			Pair pa = (Pair) o;
+			Point p = (Point) pa.a;
+			Color c = (Color) pa.b;
+			r = e.getRealRec();
+			
+			//Adjust rectangle to represent new bubble
+			r.x = (r.x+r.width/2)-(p.y*r.width)/2;
+			r.y = (r.y+r.height/2)-(p.y*r.height)/2;
+			r.width = p.y*r.width;
+			r.height = p.y*r.height;
+			fillOval(g, new Color(c.getRed(), c.getGreen(), c.getBlue(), percToCol(p.x)), r);
 		}
 	}
 
 	public static void drawXBoxButton(Graphics2D g, XboxButton b) {
 		Rectangle r = b.getRealRec();
-
-		//Shadow
-		double rad = r.width+8;
-		Color s = new Color(80, 80, 80);
-		for (double i=0; i<rad; i+= 0.1) {
-			g.setColor(getGrad(bg, s, i, rad));
-			g.fillOval(cW(r.x-rad*0.25+i/2), cH(r.y-rad/2+i), cW(rad-i), cW(rad-i));
-		}
-
+		double rad = r.width;
+		
 		//Button
-		rad = r.width;
 		for (double i=0; i<rad; i+= 0.1) {
-			g.setColor(getGrad(b.start, b.end, i, rad));
-			g.fillOval(cW(r.x+i/2), cH(r.y+i), cW(rad-i), cW(rad-i));
+			Rectangle r1 = new Rectangle(r.x+i/2, r.y+i, rad-i, (rad-i)*2);
+			fillOval(g, getGrad(b.start, b.end, i, rad), r1);
 		}
+		
 		//Label
 		g.setColor(b.start);
 		g.setFont(new Font("Verdana", Font.BOLD, 30));
 		g.drawString(b.label, cW(r.x+rad*0.25), cH(r.y+rad*1.55));
+	}
+	
+	public static void drawShadow(Graphics2D g, Component c) {
+		Rectangle r = c.getRealRec();
+		double rad = r.width+8;
+		Color start = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 0);
+		Color end = new Color(80, 80, 80, 255);
+		
+		for (double i=0; i<rad; i+= 0.1) {
+			Rectangle r1 = new Rectangle(r.x-rad*0.25+i/2, r.y-rad/2+i, rad-i, (rad-i)*2);
+			drawOval(g, getGrad(start, end, i, rad), r1);
+		}
 	}
 
 	public static void fillRect(Graphics2D g, Color c, Rectangle r) {
@@ -136,6 +150,11 @@ public class ScreenUtils {
 	public static void drawOval(Graphics2D g, Color c, Rectangle r) {
 		g.setColor(c);
 		g.drawOval(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
+	}
+	
+	public static void fillOval(Graphics2D g, Color c, Rectangle r) {
+		g.setColor(c);
+		g.fillOval(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
 	}
 	
 	public static Color getGrad(Color start, Color end, double z, double rad) {

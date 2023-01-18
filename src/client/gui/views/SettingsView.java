@@ -90,6 +90,6 @@ public class SettingsView extends View {
 	@Override
 	public void draw(Graphics2D g) {
 		ScreenUtils.fillRoundRect(g, bg, r);
-		drawComponents(g);
+		super.draw(g);
 	}
 }

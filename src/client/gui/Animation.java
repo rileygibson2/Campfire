@@ -1,12 +1,14 @@
 package client.gui;
 
 
+import java.awt.Color;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 import client.Client;
 import client.gui.components.Button;
+import general.Pair;
 import general.Point;
 import general.Rectangle;
 
@@ -117,12 +119,15 @@ public class Animation {
 		public void run() {
 			elements = new HashSet<Object>(); //One point for each pulse, x is opacity, y is rad
 			while (!stop) {
-				if (i%200==0) elements.add(new Point(100, 1)); //Add new bubble
+				//Add new bubble
+				if (((i-92)/100d)%1==0) elements.add(new Pair(new Point(50, 1), new Color(0, 220, 50)));
+				if ((i/100d)%1==0) elements.add(new Pair(new Point(50, 1), new Color(0, 200, 100)));
 				
 				Set<Object> toRemove = new HashSet<>();
 				for (Object o : elements) {
-					Point p = (Point) o;
-					p.y++; //Expand bubble
+					Pair pa = (Pair) o;
+					Point p = (Point) pa.a;
+					p.y += 0.1; //Expand bubble
 					if (p.x>0) p.x--; //Lower opacity
 					else toRemove.add(o);
 				}

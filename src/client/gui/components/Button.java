@@ -74,6 +74,6 @@ public class Button extends Component {
 	@Override
 	public void draw(Graphics2D g) {
 		ScreenUtils.drawButton(g, this);
-		drawComponents(g);
+		super.draw(g);
 	}
 }

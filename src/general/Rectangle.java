@@ -1,6 +1,6 @@
 package general;
 
-public class Rectangle extends Coord {
+public class Rectangle {
 	public double x;
 	public double y;
 	public double width;

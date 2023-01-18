@@ -42,7 +42,7 @@ public class Image extends Component {
 
 	@Override
 	public void draw(Graphics2D g) {
-		drawComponents(g);
+		super.draw(g);
 		ScreenUtils.drawImage(g, this);
 	}
 

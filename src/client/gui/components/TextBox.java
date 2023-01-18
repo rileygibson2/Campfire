@@ -99,6 +99,6 @@ public class TextBox extends Component {
 	@Override
 	public void draw(Graphics2D g) {
 		ScreenUtils.drawTextBox(g, this);
-		drawComponents(g);
+		super.draw(g);
 	}
 }

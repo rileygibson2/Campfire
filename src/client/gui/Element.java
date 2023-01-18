@@ -103,6 +103,14 @@ public abstract class Element {
 		Collections.reverse(components);
 		for (Component c : components) c.draw(g);
 	}
+	
+	public void drawComponentShadows(Graphics2D g) {
+		sortComponents();
+		Collections.reverse(components);
+		for (Component c : components) {
+			if (c.hasShadow) ScreenUtils.drawShadow(g, c);
+		}
+	}
 
 	public boolean isOver(Point p) {
 		Rectangle rS = getRealRec();

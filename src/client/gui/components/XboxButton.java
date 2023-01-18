@@ -18,6 +18,7 @@ public class XboxButton extends Button {
 		this.label = label;
 		this.start = start;
 		this.end = end;
+		hasShadow = true;
 	}
 	
 	@Override
