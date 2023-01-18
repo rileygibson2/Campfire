@@ -3,22 +3,25 @@ package client.gui;
 
 import java.awt.Color;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
 import client.Client;
 import client.gui.components.Button;
+import client.gui.views.CallView;
 import general.Pair;
 import general.Point;
 import general.Rectangle;
 
 public class Animation {
 
-	private Element target;
+	private Object target;
 	private Thread thread;
 	private Animations animation;
 	private boolean stop;
 	private boolean hasRun; //Stops same thread attempting to run twice and throwing an error
+	private int wait = 20;
 	
 	private Set<Object> elements; //Generic list of elements an animation can use
 	private int i;
@@ -26,19 +29,34 @@ public class Animation {
 	public static enum Animations {
 		HoverButton,
 		UnhoverButton,
-		PulseButton
+		PulseButton,
+		DataMove
 	}
 	
-	public Animation(Element target, Animations t) {
+	public Animation(Object target, Animations t) {
 		this.target = target;
-		this.animation = t;
-		this.stop = false;
-		this.hasRun = false;
+		animation = t;
+		stop = false;
+		hasRun = false;
+		thread = getThread(t);
+	}
+	
+	public Animation(Animations t) {
+		target = null;
+		animation = t;
+		stop = false;
+		hasRun = false;
+		thread = getThread(t);
+	}
+	
+	private Thread getThread(Animations t) {
 		switch (t) {
-		case HoverButton: this.thread = hoverButton; break;
-		case UnhoverButton: this.thread = unhoverButton; break;
-		case PulseButton: this.thread = pulseButton; break;
+		case HoverButton: return hoverButton;
+		case UnhoverButton: return unhoverButton;
+		case PulseButton: return pulseButton;
+		case DataMove: return dataMove;
 		}
+		return null;
 	}
 	
 	public boolean isRunning() {return !this.stop;}
@@ -49,7 +67,9 @@ public class Animation {
 	
 	public Set<?> getElements() {return Collections.unmodifiableSet(elements);}
 	
-	public Element getTarget() {return this.target;}
+	public Object getTarget() {return this.target;}
+	
+	public Animations getType() {return this.animation;}
 	
 	public void start() {
 		if (!hasRun) {
@@ -65,7 +85,7 @@ public class Animation {
 	private void iterate() {
 		i++;
 		Client.cGUI.repaint();
-		try {Thread.sleep(20);}
+		try {Thread.sleep(wait);}
 		catch (InterruptedException e) {e.printStackTrace();}
 	}
 	
@@ -120,18 +140,34 @@ public class Animation {
 			elements = new HashSet<Object>(); //One point for each pulse, x is opacity, y is rad
 			while (!stop) {
 				//Add new bubble
-				if (((i-92)/100d)%1==0) elements.add(new Pair(new Point(50, 1), new Color(0, 220, 50)));
-				if ((i/100d)%1==0) elements.add(new Pair(new Point(50, 1), new Color(0, 200, 100)));
+				if (((i-62)/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), new Color(0, 220, 50)));
+				if ((i/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), new Color(0, 200, 100)));
 				
 				Set<Object> toRemove = new HashSet<>();
 				for (Object o : elements) {
-					Pair pa = (Pair) o;
-					Point p = (Point) pa.a;
+					Pair<Point, Color> pa = (Pair<Point, Color>) o;
+					Point p = pa.a;
 					p.y += 0.1; //Expand bubble
 					if (p.x>0) p.x--; //Lower opacity
 					else toRemove.add(o);
 				}
 				elements.removeAll(toRemove); //Remove invisible bubbles
+				
+				iterate();
+			}
+			
+			finish();
+		}
+	};
+	
+	final Thread dataMove = new Thread() {
+		@Override
+		public void run() {
+			wait = 30;
+			while (!stop) {
+				Deque<Double> data = (Deque<Double>) target;
+				data.pop();
+				data.addLast(0d);
 				
 				iterate();
 			}

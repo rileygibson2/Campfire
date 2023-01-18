@@ -3,27 +3,30 @@ package client.gui;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import client.gui.Animation.Animations;
 import client.gui.components.Button;
 import client.gui.components.Component;
 import client.gui.components.DropDown;
 import client.gui.components.Image;
 import client.gui.components.Label;
+import client.gui.components.SimpleBox;
 import client.gui.components.TextBox;
 import client.gui.components.XboxButton;
+import client.gui.views.CallView;
 import general.Pair;
 import general.Point;
 import general.Rectangle;
 
 public class ScreenUtils {
 
-	static int sW = ClientGUI.sW;
-	static int sH = ClientGUI.sH;
+	static Rectangle screen = ClientGUI.screen;
 	static Color bg = new Color(20, 20, 20);
 
 	public static void drawBase(Graphics2D g) {
@@ -84,15 +87,69 @@ public class ScreenUtils {
 		g.drawImage(img, cW(r.x), cH(r.y), cW(r.width), cH(r.height), null);
 	}
 	
+	public static void drawDataWave(Graphics2D g, CallView v, SimpleBox b) {
+		Rectangle r = b.getRealRec();
+		//fillRect(g, new Color(200, 0, 0, 50), r);
+		
+		//Draw main line
+		//fillRect(g, Color.WHITE, new Rectangle(r.x, r.y+r.height/2, r.width, 0.5));
+		
+		double xInc = r.width/v.dataLen;
+		double yInc = (r.height/2)/v.dataBounds.y;
+		double x = 0, y = 0, yI = 0, xBez, yPrev, yPrevI;
+		int i = 0;
+		
+		//Open paths on center line
+		GeneralPath gP = new GeneralPath();
+		GeneralPath gPI = new GeneralPath(); //Inverse Path
+		gP.moveTo(cW(r.x), cH(r.y+r.height/2)); //Upper line
+		gPI.moveTo(cW(r.x), cH(r.y+r.height/2)); //Inverted line
+		
+		for (Double d : v.data) {
+			//Next Point
+			yPrev = y;
+			yPrevI = yI;
+			x = r.x+(i*xInc);
+			y = (r.y+r.height/2)-(d*yInc);
+			yI = (r.y+r.height/2)+(d*yInc);
+			
+			if (i==0) {
+				gP.moveTo(cW(x), cH(y)); //Upper line
+				gPI.moveTo(cW(x), cH(yI)); //Inverted line
+			}
+			else {
+				//Bezier control points allow for a double parabolic curve between each poing
+				xBez = x-(xInc/2) ;
+				gP.curveTo(cW(xBez), cH(yPrev), cW(xBez), cH(y), cW(x), cH(y)); //Upper line
+				gPI.curveTo(cW(xBez), cH(yPrevI), cW(xBez), cH(yI), cW(x), cH(yI)); //Inverted line
+			}
+			i++;
+		}
+		
+		//Close paths back to center line
+		yPrev = y;
+		yPrevI = yI;
+		x = r.x+(i*xInc);
+		y = (r.y+r.height/2);
+		yI = (r.y+r.height/2);
+		xBez = x-(xInc/2) ;
+		gP.curveTo(cW(xBez), cH(yPrev), cW(xBez), cH(y), cW(x), cH(y)); //Upper line
+		gPI.curveTo(cW(xBez), cH(yPrevI), cW(xBez), cH(yI), cW(x), cH(yI)); //Inverted line
+		
+		g.setColor(Color.WHITE);
+		g.draw(gP);
+		g.draw(gPI);
+	}
+	
 	public static void drawPulse(Graphics2D g, Animation a) {
-		if (!a.hasElements()) return;
-		Element e = a.getTarget();
+		if (a.getType()!=Animations.PulseButton || !a.hasElements()) return;
+		Element e = (Element) a.getTarget();
 		Rectangle r;
 		
 		for (Object o : a.getElements()) {
-			Pair pa = (Pair) o;
-			Point p = (Point) pa.a;
-			Color c = (Color) pa.b;
+			Pair<Point, Color> pa = (Pair<Point, Color>) o;
+			Point p = pa.a;
+			Color c = pa.b;
 			r = e.getRealRec();
 			
 			//Adjust rectangle to represent new bubble
@@ -175,11 +232,39 @@ public class ScreenUtils {
 		return (int) ((p/100)*255);
 	}
 
+	/**
+	 * Scales a percentage of the screen width to an actual x point
+	 * @param p
+	 * @return
+	 */
 	public static int cW(double p) {
-		return ClientGUI.cW(p);
+		return (int) (screen.width*((double) p/100));
 	}
 
+	/**
+	 * Scales a percentage of the screen height to an actual y point
+	 * @param p
+	 * @return
+	 */
 	public static int cH(double p) {
-		return ClientGUI.cH(p);
+		return (int) (screen.height*((double) p/100));
+	}
+	
+	/**
+	 * Scales an actual x point to a percentage of screen width
+	 * @param p
+	 * @return
+	 */
+	public static double cWR(double p) {
+		return (p/screen.width)*100;
+	}
+
+	/**
+	 * Scales an actual y point to a percentage of screen height
+	 * @param p
+	 * @return
+	 */
+	public static double cHR(double p) {
+		return (p/screen.height)*100;
 	}
 }

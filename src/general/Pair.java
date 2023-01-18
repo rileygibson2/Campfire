@@ -1,12 +1,12 @@
 package general;
 
-public class Pair {
-	public Object a;
-	public Object b;
+public class Pair<A, B> {
+	public A a;
+	public B b;
 	
 	public Pair() {}
 	
-	public Pair(Object a, Object b) {
+	public Pair(A a, B b) {
 		this.a = a;
 		this.b = b;
 	}
@@ -19,13 +19,13 @@ public class Pair {
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof Pair)) return false;
-		Pair p = (Pair) o;
+		Pair<A, B> p = (Pair<A, B>) o;
 		if (a.equals(p.a)&&b.equals(p.b)) return true;
 		return false;
 	}
 	
-	public Pair clone() {
-		return new Pair(a, b);
+	public Pair<A, B> clone() {
+		return new Pair<A, B>(a, b);
 	}
 }
 

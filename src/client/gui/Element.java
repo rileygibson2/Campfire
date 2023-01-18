@@ -87,8 +87,8 @@ public abstract class Element {
 	 */
 	public Point scalePoint(Point p) {
 		//Scale real point to percentage point
-		p.x = ClientGUI.cWR(p.x);
-		p.y = ClientGUI.cHR(p.y);
+		p.x = ScreenUtils.cWR(p.x);
+		p.y = ScreenUtils.cHR(p.y);
 
 		Rectangle r = getRealRec();
 		Point pNew = new Point();
@@ -114,10 +114,10 @@ public abstract class Element {
 
 	public boolean isOver(Point p) {
 		Rectangle rS = getRealRec();
-		if (p.x>=ClientGUI.cW(rS.x)
-				&& p.x<=ClientGUI.cW(rS.x+rS.width)
-				&& p.y>=ClientGUI.cH(rS.y)
-				&& p.y<=ClientGUI.cH(rS.y+rS.height)) {
+		if (p.x>=ScreenUtils.cW(rS.x)
+				&& p.x<=ScreenUtils.cW(rS.x+rS.width)
+				&& p.y>=ScreenUtils.cH(rS.y)
+				&& p.y<=ScreenUtils.cH(rS.y+rS.height)) {
 			return true;
 		}
 		return false;
@@ -132,10 +132,10 @@ public abstract class Element {
 	 */
 	public boolean isOver(Point p, Rectangle rec) {
 		Rectangle rS = getRealRec(rec);
-		if (p.x>=ClientGUI.cW(rS.x)
-				&& p.x<=ClientGUI.cW(rS.x+rS.width)
-				&& p.y>=ClientGUI.cH(rS.y)
-				&& p.y<=ClientGUI.cH(rS.y+rS.height)) {
+		if (p.x>=ScreenUtils.cW(rS.x)
+				&& p.x<=ScreenUtils.cW(rS.x+rS.width)
+				&& p.y>=ScreenUtils.cH(rS.y)
+				&& p.y<=ScreenUtils.cH(rS.y+rS.height)) {
 			return true;
 		}
 		return false;

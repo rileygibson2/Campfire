@@ -2,10 +2,11 @@ package client;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.sound.sampled.AudioFormat;
@@ -21,7 +22,7 @@ import javax.sound.sampled.TargetDataLine;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 public class AudioManager {
-	final AudioFormat format;
+	static AudioFormat format;
 
 	//Infos
 	private Map<String, Line.Info> ins;
@@ -33,36 +34,36 @@ public class AudioManager {
 	AudioInputStream audioStream;
 	private TargetDataLine micLine;
 	private SourceDataLine speakerLine;
-	private final static int blockLength = 1024;
+	final static int blockLength = 1024;
 	//44100
 
 	public AudioManager() {
-		format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100*2, 16, 1, 2, 44100, false);
+		format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 		micLineInfo = null;
 		speakerLineInfo = null;
-		
+
 		enumerateMicrophones();
 		enumerateSpeakers();
 		if (getDefaultMic()!=null) micLineInfo = getDefaultMic().getValue();
 		if (getDefaultSpeaker()!=null) speakerLineInfo = getDefaultSpeaker().getValue();
 	}
-	
+
 	public Map.Entry<String, Line.Info> getDefaultMic() {
 		if (ins==null) return null;
 		for (Map.Entry<String, Line.Info> m : ins.entrySet()) return m;
 		return null;
 	}
-	
+
 	public Map.Entry<String, Line.Info> getDefaultSpeaker() {
 		if (outs==null) return null;
 		for (Map.Entry<String, Line.Info> m : outs.entrySet()) return m;
 		return null;
 	}
-	
+
 	public void enumerateMicrophones() {
 		ins = new HashMap<String, Line.Info>();
 		Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-		
+
 		for (Mixer.Info info : mixerInfos){
 			Mixer m = AudioSystem.getMixer(info);
 			Line.Info[] lineInfos = m.getTargetLineInfo();
@@ -72,33 +73,94 @@ public class AudioManager {
 			}
 		}
 	}
-	
+
 	public void enumerateSpeakers() {
 		outs = new HashMap<String, Line.Info>();
 		Mixer.Info[] mixerInfos = AudioSystem.getMixerInfo();
-		
+
 		for (Mixer.Info info : mixerInfos){
 			Mixer m = AudioSystem.getMixer(info);
 			Line.Info[] lineInfos = m.getSourceLineInfo();
-			
+
 			if (lineInfos.length>=1 && lineInfos[0].getLineClass().equals(SourceDataLine.class)) {
 				outs.put(info.getName(), lineInfos[0]); //Only add if it's an audio output device
 			}
 		}
 	}
-	
+
 	public LinkedHashMap<String, Line.Info> listMicrophones() {
 		enumerateMicrophones();
 		LinkedHashMap<String, Line.Info> mics = new LinkedHashMap<>();
 		for (Map.Entry<String, Line.Info> m : ins.entrySet()) mics.put(m.getKey(), m.getValue());
 		return mics;
 	}
-	
+
 	public LinkedHashMap<String, Line.Info> listSpeakers() {
 		enumerateSpeakers();
 		LinkedHashMap<String, Line.Info> speakers = new LinkedHashMap<>();
 		for (Map.Entry<String, Line.Info> m : outs.entrySet()) speakers.put(m.getKey(), m.getValue());
 		return speakers;
+	}
+
+	public AudioInputStream startInputStream(AudioFormat format) {
+		try {
+			micLine = (TargetDataLine) AudioSystem.getLine(new DataLine.Info(TargetDataLine.class, format));
+			micLine.open();
+			System.out.println("TargetLine available: "+micLine.available());
+			micLine.start();
+			return new AudioInputStream(micLine);
+
+		} catch (LineUnavailableException e) {throw new Error("Error creating input stream from microphone: "+e.toString());}
+	}
+
+	public Thread getInputStreamThread(byte[] buffer) {
+		return new Thread() {
+			@Override
+			public void run() {
+				try {
+					// Get the default microphone
+					TargetDataLine microphone = AudioSystem.getTargetDataLine(format);
+					microphone.open(format); // Open the microphone
+					microphone.start(); // Start capturing audio data
+
+					// Open audio output (e.g. speakers)
+					DataLine.Info speakerInfo = new DataLine.Info(SourceDataLine.class, format);
+					SourceDataLine speakers = (SourceDataLine) AudioSystem.getLine(speakerInfo);
+					speakers.open(format);
+					speakers.start(); // Start writing audio data to the speakers
+
+					//buffer = new byte[blockLength]; // Create a buffer to hold the audio data
+
+					// Capture audio data and save it to the file
+					while (true) {
+						int bytesRead = microphone.read(buffer, 0, buffer.length);
+						speakers.write(buffer, 0, bytesRead);
+					}
+				}
+				catch (Exception e) {e.printStackTrace();}
+			}
+		};
+	}
+
+	static double[] decode(byte[] buffer, AudioFormat format) {
+		int  bits = format.getSampleSizeInBits();
+		double max = Math.pow(2, bits - 1);
+
+		ByteBuffer bb = ByteBuffer.wrap(buffer);
+		bb.order(format.isBigEndian() ?
+				ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
+
+		double[] samples = new double[buffer.length * 8 / bits];
+		for(int i=0; i<samples.length; ++i) {
+			switch(bits) {
+			case 8:  samples[i] = ( bb.get()      / max ); break;
+			case 16: samples[i] = ( bb.getShort() / max ); break;
+			case 32: samples[i] = ( bb.getInt()   / max ); break;
+			case 64: samples[i] = ( bb.getLong()  / max ); break;
+			}
+		}
+
+		return samples;
 	}
 
 	public void release() {
@@ -108,19 +170,20 @@ public class AudioManager {
 				speakerLine.close();
 				speakerLine = null;
 			}
-			if (audioStream!=null) {
-				audioStream.close();
-				audioStream = null;
-			}
 			if (micLine!=null) {
 				micLine.drain();
 				micLine.close();
 				micLine = null;
 			}
+			if (audioStream!=null) {
+				audioStream.close();
+				audioStream = null;
+			}
 		}
 		catch (IOException e) {e.printStackTrace();}
-	}
+	}  
 
+	@Deprecated
 	private void runSpectro(boolean useMic, boolean useSpeaker) {
 
 		try {
@@ -146,6 +209,7 @@ public class AudioManager {
 		catch (LineUnavailableException e) {e.printStackTrace();}
 	}
 
+	@Deprecated
 	public AudioInputStream getFileInputStream(String fileName) {
 		try {
 			return AudioSystem.getAudioInputStream(new File(fileName));
@@ -154,6 +218,7 @@ public class AudioManager {
 		}
 	}
 
+	@Deprecated
 	public AudioInputStream getMicInputStream(AudioFormat format) {
 		try {
 			micLine = (TargetDataLine) AudioSystem.getLine(new DataLine.Info(TargetDataLine.class, format));
@@ -165,6 +230,7 @@ public class AudioManager {
 		} catch (LineUnavailableException e) {throw new Error("Error creating input stream from microphone");}
 	}
 
+	@Deprecated
 	public TargetDataLine getTargetDataLine(String name) {
 		Line.Info lineInfo = null;
 		for (Map.Entry<String, Line.Info> m : ins.entrySet()) {

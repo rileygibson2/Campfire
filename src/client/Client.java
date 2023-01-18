@@ -25,6 +25,8 @@ public class Client {
 	ClientPrinter cP;
 	PrintWriter out;
 	
+	Call call;
+	
 	public static final String ipRegex = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$";
 
 
@@ -36,9 +38,12 @@ public class Client {
 		Thread.sleep(2000);
 	}
 
-	public void call(String name) {
-		CLI.print(this, "Initiating call to "+name);
-		cP.print(Utils.format(Code.CallRequest, name));
+	public void call() {
+		CLI.print(this, "Initiating call");
+		
+		call = new Call(this);
+		call.startCall();
+		//cP.print(Utils.format(Code.CallRequest, name));
 	}
 
 	public void shutdown() {
@@ -58,7 +63,8 @@ public class Client {
 
 		clientList = new ArrayList<String>();
 		cGUI = ClientGUI.initialise(this);
-		//aM = new AudioManager(this);
+		aM = new AudioManager();
+		call = null;
 
 		/*try {socket = new Socket("localhost", 5000);}
 		catch (IOException e) {System.out.println("Connection refused");}

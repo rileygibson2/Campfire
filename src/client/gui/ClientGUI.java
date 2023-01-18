@@ -22,13 +22,13 @@ import client.gui.views.HomeView;
 import client.gui.views.SettingsView;
 import client.gui.views.View;
 import client.gui.views.View.ViewType;
+import general.Rectangle;
 
 
 public class ClientGUI extends JPanel {
 
 	private static final long serialVersionUID = 1L;
-	public static int sW = 600;
-	public static int sH = 300;
+	public static Rectangle screen = new Rectangle(0, 0, 600, 300);
 	public static JFrame frame;
 	
 	Client c;
@@ -116,42 +116,6 @@ public class ClientGUI extends JPanel {
        dialog.setVisible(true);
 	}
 	
-	/**
-	 * Scales a percentage of the screen width to an actual x point
-	 * @param p
-	 * @return
-	 */
-	public static int cW(double p) {
-		return (int) (sW*((double) p/100));
-	}
-
-	/**
-	 * Scales a percentage of the screen height to an actual y point
-	 * @param p
-	 * @return
-	 */
-	public static int cH(double p) {
-		return (int) (sH*((double) p/100));
-	}
-	
-	/**
-	 * Scales an actual x point to a percentage of screen width
-	 * @param p
-	 * @return
-	 */
-	public static double cWR(double p) {
-		return (p/sW)*100;
-	}
-
-	/**
-	 * Scales an actual y point to a percentage of screen height
-	 * @param p
-	 * @return
-	 */
-	public static double cHR(double p) {
-		return (p/sH)*100;
-	}
-	
 	@Override
 	public void paintComponent(Graphics g) {
 		ScreenUtils.drawBase((Graphics2D) g);
@@ -165,7 +129,7 @@ public class ClientGUI extends JPanel {
 				//Initialise
 				System.setProperty("apple.laf.useScreenMenuBar", "true");
 				frame = new JFrame();
-				panel.setPreferredSize(new Dimension(sW, sH));
+				panel.setPreferredSize(new Dimension((int) screen.width, (int) screen.height));
 				frame.getContentPane().add(panel);
 
 				//Label and build
