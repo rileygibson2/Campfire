@@ -1,16 +1,17 @@
 package client;
 
-import java.util.Arrays;
-
 import client.gui.views.CallView;
-import general.Point;
+import client.gui.views.HomeView;
 import general.Utils;
+import threads.ThreadController;
 
 public class Call {
 	
 	Client c;
-	CallView callView;
-	Thread reader;
+	CallView cV;
+	ThreadController audio;
+	ThreadController checker;
+	
 	byte[] buffer;
 	
 	public Call(Client c) {
@@ -20,23 +21,23 @@ public class Call {
 	
 	public void startCall() {
 		//Deal with GUI
-		callView = new CallView();
-		Client.cGUI.changeView(callView);
+		cV = new CallView();
+		Client.cGUI.changeView(cV);
 		
 		//Start reader
-		reader = Client.aM.getInputStreamThread(buffer);
-		reader.start();
+		audio = AudioManager.getInstance().getMicrophoneReader(buffer);
+		audio.start();
 		
-		Thread checker = new Thread() {
+		checker = new ThreadController() {
 			@Override
 			public void run() {
-				while (true) {
+				while (isRunning()) {
 					int[] data = Utils.decodeAmplitude(AudioManager.format, buffer);
-					data = Utils.averageAndShrinkAndScale(data, 5, callView.dataBounds);
-					callView.addData(data);
+					data = Utils.averageAndShrinkAndScale(data, 2, cV.dataBounds);
+					cV.addData(data);
 					
 					//System.out.println(data.length+": "+Arrays.toString(data)+"\n\n\n\n\n\n");
-					try {Thread.sleep(30);}
+					try {Thread.sleep(10);}
 					catch (InterruptedException e) {e.printStackTrace();}
 				}
 			}
@@ -45,6 +46,8 @@ public class Call {
 	}
 	
 	public void stopCall() {
-		
+		if (checker!=null) checker.end();
+		if (audio!=null) audio.end();
+		Client.cGUI.changeView(HomeView.getInstance());
 	}
 }

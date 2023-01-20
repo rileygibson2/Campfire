@@ -8,7 +8,6 @@ import java.awt.event.MouseMotionListener;
 import java.util.HashSet;
 import java.util.Set;
 
-import client.Call;
 import client.gui.components.Component;
 import client.gui.views.CallView;
 import client.gui.views.RingView;
@@ -39,18 +38,19 @@ public class IO implements MouseListener, MouseMotionListener, KeyListener {
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		c.cView.doClick(new Point(e.getX(), e.getY()));
+		c.view.doClick(new Point(e.getX(), e.getY()));
 		c.repaint();
 	}
 	
 	@Override
 	public void keyTyped(KeyEvent e) {
 		for (Component c : keyListeners) c.doKeyPress(e);
-		if (e.getExtendedKeyCode()==KeyEvent.VK_A) c.changeView(new RingView());
-		if (e.getExtendedKeyCode()==KeyEvent.VK_C) c.changeView(new CallView());
-		if (e.getExtendedKeyCode()==KeyEvent.VK_B) {
-			c.c.call();
-		};
+		if (e.getExtendedKeyCode()==KeyEvent.VK_C) c.c.call();
+		if (e.getExtendedKeyCode()==KeyEvent.VK_R) c.c.ring();
+		if (e.getExtendedKeyCode()==KeyEvent.VK_H) {
+			c.c.endCall();
+			c.c.endRing();
+		}
 		c.repaint();
 	}
 

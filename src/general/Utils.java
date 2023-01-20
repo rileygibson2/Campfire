@@ -1,6 +1,7 @@
 package general;
 
-import java.util.Arrays;
+import java.io.File;
+import java.io.InputStream;
 
 import javax.sound.sampled.AudioFormat;
 
@@ -21,6 +22,10 @@ public class Utils {
 		return null;
 	}
 	
+	public static InputStream getInputStream(String path) {
+		return Utils.class.getClassLoader().getResourceAsStream(path);
+	}
+	
 	/**
 	 * Shrinks the input array by a factor of the amound variable, averging to do so.
 	 * Makes sure all elements of new averaged array are within bounds and strips
@@ -37,22 +42,21 @@ public class Utils {
 		
 		for (int i=0; i<in.length; i++) {
 			if (i%amount==0) {
-				if (z<out.length) {
-					//Average and scale and place in output
+				if (z<out.length) { //Average and store
 					avg = (int) (total/amount);
-					if (avg>bounds.y) avg = (int) bounds.y;
-					if (avg<bounds.x) avg = (int) bounds.x;
 					out[z] = avg;
 				}
 				total = 0;
 				z++;
 			}
-			
 			total += in[i];
 		}
 		
-		//Filter out all 0's
-		out = Arrays.stream(out).filter(i->i!=0).toArray();
+		for (int i=0; i<out.length; i++) {
+			out[i] = out[i]/10;
+			if (out[i]>bounds.y) out[i] = (int) bounds.y;
+			if (out[i]<bounds.x) out[i] = (int) bounds.x;
+		}
 		return out;
 	}
 	

@@ -15,7 +15,9 @@ import general.Rectangle;
 
 public class HomeView extends View {
 	
-	public HomeView() {
+	protected static HomeView singleton;
+	
+	private HomeView() {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
 		components.add(new Label(new Point(8, 53), "RileyCom", new Font("Geneva", Font.ROMAN_BASELINE, 40), new Color(230, 230, 230), this));
 		components.add(new XboxButton(new Rectangle(70, 60, 7, 14), "A", new Color(89, 141, 19), new Color(112, 255, 12), this));
@@ -24,10 +26,15 @@ public class HomeView extends View {
 		components.add(new XboxButton(new Rectangle(70, 20, 7, 14), "Y", new Color(233, 144, 12), new Color(251, 200, 8), this));
 		
 		Button b = new Button(new Rectangle(10, 60, 5, 10), new Color(100, 100, 100), this);
-		b.setClick(() -> Client.cGUI.changeView(ViewType.Settings));
+		b.setClickAction(() -> Client.cGUI.changeView(SettingsView.getInstance()));
 		b.components.add(new Image(new Rectangle(10, 10, 80, 80), "settings.png", b));
 		components.add(b);
 	}
+	
+	public static HomeView getInstance() {
+		if (singleton==null) singleton = new HomeView();
+		return singleton;
+	};
 
 	@Override
 	public void enter() {
@@ -54,7 +61,6 @@ public class HomeView extends View {
 				}
 			}
 		}
-		//if (!i) c.resetHover(null);
-		
+		//if (!i) c.resetHover(null);	
 	}
 }

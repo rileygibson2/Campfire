@@ -4,16 +4,16 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 
-import client.gui.Animation;
 import client.gui.Element;
 import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
+import threads.ThreadController;
 
 public class Button extends Component {
 
 	boolean isHovered;
-	public Animation hoverAni;
+	public ThreadController hoverAni;
 	public Color col;
 	public Runnable onClick;
 	
@@ -27,12 +27,11 @@ public class Button extends Component {
 		hoverAni = null;
 	}
 	
-	public void setClick(Runnable onClick) {
+	public void setClickAction(Runnable onClick) {
 		this.onClick = onClick;
 	}
 
 	public void doClick(Point p) {
-		System.out.println("Button clicked");
 		if (onClick!=null) onClick.run();
 	};
 

@@ -10,22 +10,24 @@ import client.gui.Element;
 import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
+import threads.AnimationFactory;
+import threads.AnimationFactory.Animations;
+import threads.ThreadController;
 
 public class TextBox extends Component {
 
-	ClientGUI c;
-	private String text;
-	Label textLabel;
+	
+	public String text;
+	public Label textLabel;
 	String regex;
 
 	//Cursor
-	private String cursor;
-	private boolean cursorRun;
+	private ThreadController cursorAni;
+	public String cursor;
 
 
-	public TextBox(String regex, Rectangle rectangle, Element parent, ClientGUI c) {
+	public TextBox(String regex, Rectangle rectangle, Element parent) {
 		super(rectangle, parent);
-		this.c = c;
 		this.regex = regex;
 		text = "";
 		selected = false;
@@ -33,7 +35,6 @@ public class TextBox extends Component {
 		components.add(textLabel);
 
 		cursor = "";
-		cursorRun = false;
 	}
 
 	@Override
@@ -41,40 +42,18 @@ public class TextBox extends Component {
 		System.out.println("TextBox clicked");
 		selected = true;
 		ClientGUI.io.registerKeyListener(this);
-		getCursorThread().start();
+		
+		cursorAni = AnimationFactory.getAnimation(this, Animations.CursorBlip);
+		cursorAni.start();
 	}
 
 	@Override
 	public void doDeselect() {
 		ClientGUI.io.deregisterKeyListener(textLabel);;
 		selected = false;
-		cursorRun = false;
+		if (cursorAni!=null && cursorAni.isRunning()) cursorAni.end();
 		if (regex!=null&&!text.matches(regex)) text = "";
 		super.doDeselect();
-	}
-
-	public Thread getCursorThread() {
-		return new Thread() {
-			@Override
-			public void run() {
-				cursorRun = true;
-
-				while (cursorRun) {
-					if (cursor.isEmpty()) cursor = "_";
-					else cursor = "";
-					textLabel.text = text+cursor;
-
-					c.repaint();
-					try {Thread.sleep(500);}
-					catch (InterruptedException e) {e.printStackTrace();}
-				}
-
-				//Reset
-				cursor = "";
-				textLabel.text = text;
-				c.repaint();
-			}
-		};
 	}
 
 	@Override

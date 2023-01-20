@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import general.CLI;
-import general.Code;
-import general.Message;
-import general.Utils;
+import server.Message;
 
 public class ClientListener extends Thread {
 	Client c;
@@ -34,34 +31,34 @@ public class ClientListener extends Thread {
 	}
 	
 	public void respond(Message m) {
-		CLI.print(this, m.code+" recieved");
-		switch (m.code) {
-		case CallAccept:
-			break;
-		case CallDecline:
-			break;
-		case CallEnd:
-			break;
-		case CallRequest:
-			CLI.print(this, "Ring from "+m.message);
-			c.cGUI.createCallDialog(m.message);
-			break;
-		case ClientsList:
-			String[] split = m.message.split(",");
-			c.clientList.clear();
-			for (String s : split) {
-				if (!s.equals(c.name)) c.clientList.add(s);
-			}
-			c.cGUI.repaint();
-			break;
-		case IAm:
-			break;
-		case WhoIs:
-			c.cP.print(Utils.format(Code.IAm, c.name));
-			break;
-		default:
-			break;
-		
-		}
+//		CLI.debug(Loc.CLIENT, m.code+" recieved");
+//		switch (m.code) {
+//		case CallAccept:
+//			break;
+//		case CallDecline:
+//			break;
+//		case CallEnd:
+//			break;
+//		case CallRequest:
+//			CLI.debug(Loc.CLIENT, "Ring from "+m.message);
+//			c.cGUI.createCallDialog(m.message);
+//			break;
+//		case ClientsList:
+//			String[] split = m.message.split(",");
+//			c.clientList.clear();
+//			for (String s : split) {
+//				if (!s.equals(c.name)) c.clientList.add(s);
+//			}
+//			c.cGUI.repaint();
+//			break;
+//		case IAm:
+//			break;
+//		case WhoIs:
+//			c.cP.print(Utils.format(Code.IAm, c.name));
+//			break;
+//		default:
+//			break;
+//		
+//		}
 	}
 }

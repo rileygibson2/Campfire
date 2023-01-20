@@ -33,8 +33,7 @@ public class ClientGUI extends JPanel {
 	
 	Client c;
 	public static IO io;
-	Set<View> views;
-	View cView;
+	View view;
 
 	public ClientGUI(Client c) {
 		this.c = c;
@@ -44,48 +43,27 @@ public class ClientGUI extends JPanel {
 		addMouseListener(io);
 		addMouseMotionListener(io);
 		addKeyListener(io);
+		changeView(HomeView.getInstance());
 		
-		views = new HashSet<View>();
-		views.add(new HomeView());
-		views.add(new SettingsView(this));
-		changeView(ViewType.Home);
-		
-		repaint();
-	}
-	
-	public void changeView(ViewType vt) {
-		View v = getView(vt);
-		if (v==null) return;
-		
-		if (cView!=null) cView.destroy();
-		cView = v;
-		cView.enter();
 		repaint();
 	}
 	
 	public void changeView(View v) { 
 		if (v==null) return;
 		
-		if (cView!=null) cView.destroy();
-		cView = v;
-		cView.enter();
+		if (view!=null) view.destroy();
+		view = v;
+		view.enter();
 		repaint();
 	}
 	
 	public void resetHover(Button except) {
-		for (Component c : cView.components) {
+		for (Component c : view.components) {
 			if (c instanceof Button) {
 				Button b = (Button) c;
 				//.unhover();
 			}
 		}
-	}
-	
-	public View getView(ViewType vt) {
-		for (View v : views) {
-			if (v.getViewType()==vt) return v;
-		}
-		return null;
 	}
 	
 	public void createCallDialog(String name) {
@@ -119,7 +97,7 @@ public class ClientGUI extends JPanel {
 	@Override
 	public void paintComponent(Graphics g) {
 		ScreenUtils.drawBase((Graphics2D) g);
-		cView.draw((Graphics2D) g);
+		view.draw((Graphics2D) g);
 	}
 
 	public static ClientGUI initialise(Client c) {

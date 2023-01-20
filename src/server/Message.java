@@ -1,4 +1,7 @@
-package general;
+package server;
+
+import general.Code;
+import general.Utils;
 
 public class Message {
 

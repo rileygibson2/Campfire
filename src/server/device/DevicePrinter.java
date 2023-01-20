@@ -1,4 +1,4 @@
-package device;
+package server.device;
 
 import java.io.IOException;
 import java.io.PrintWriter;

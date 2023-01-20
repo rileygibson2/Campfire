@@ -8,7 +8,7 @@ import general.Point;
 import general.Rectangle;
 
 public abstract class View extends Element {
-
+	
 	public enum ViewType {
 		Home,
 		Settings,
@@ -17,12 +17,11 @@ public abstract class View extends Element {
 	};
 	private final ViewType viewType;
 
-	public View(ViewType v, Rectangle r) {
+	protected View(ViewType v, Rectangle r) {
 		super(r, null);
 		this.viewType = v;
 	}
-
-
+	
 	public abstract void enter();
 	public abstract void destroy();
 	public abstract void doMove(Point p);

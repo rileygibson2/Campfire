@@ -14,35 +14,42 @@ import java.util.concurrent.Future;
 
 import client.gui.Element;
 import client.gui.ScreenUtils;
+import general.CLI;
 import general.Point;
 import general.Rectangle;
 
 public class DropDown<E> extends Component {
 
-	public LinkedHashMap<String, E> options; //LinkedHashMap maintains an order
-	public Future<LinkedHashMap<String, E>> updateOptions; //Executor that can be called to update options list
+	private LinkedHashMap<String, E> options; //LinkedHashMap maintains an order
+	private Future<LinkedHashMap<String, E>> update; //Executor that can be called to update options list
 	Map.Entry<String, E> selectedItem; //The selected item and it's name
 	private Map.Entry<String, E> noneItem =new AbstractMap.SimpleEntry<>("None", null); //A default item
+	private Runnable onSelect; //Action to happen on click
 	
 	public Label selectedLabel; //The gui selected item component
 
-	public DropDown(Map.Entry<String, E> initial, Rectangle rectangle, Element parent) {
+	public DropDown(Rectangle rectangle, Element parent) {
 		super(rectangle, parent);
 		options = new LinkedHashMap<String, E>();
-		selectedItem = initial;
-		if (selectedItem==null) selectedItem = noneItem;
+		selectedItem = noneItem;
 		
 		//Make top selected label
 		selectedLabel = new Label(new Point(8, 65), selectedItem.getKey(), new Font("Geneva", Font.ITALIC, 14), new Color(200, 200, 200), this); 
 		components.add(selectedLabel);
 	}
 	
+	public void setSelectAction(Runnable onSelect) {this.onSelect = onSelect;}
+	
+	public void setUpdateAction(Future<LinkedHashMap<String, E>> update) {this.update = update;}
+	
+	public void setSelected(Map.Entry<String, E> selected) {this.selectedItem = selected;}
+	
 	public E getSelected() {return selectedItem.getValue();}
-
+	
+	public LinkedHashMap<String, E> getOptions() {return options;}
+	
 	@Override
 	public void doClick(Point p) {
-		System.out.println("DropDown clicked");
-
 		if (selected) close(p);
 		else open();
 	}
@@ -54,8 +61,8 @@ public class DropDown<E> extends Component {
 	}
 
 	private void open() {
-		if (updateOptions!=null) {
-			try {options = updateOptions.get();}
+		if (update!=null) {
+			try {options = update.get();}
 			catch (InterruptedException | ExecutionException e) {e.printStackTrace();}
 		}
 		if (options.isEmpty()) return;
@@ -77,6 +84,8 @@ public class DropDown<E> extends Component {
 			int i = (int) Math.floor(p.y)-1;
 			if (i>=0&&i<options.size()) selectedItem = getOptionAt(i);
 			if (selectedItem!=null) selectedLabel.text = selectedItem.getKey();
+			
+			if (onSelect!=null) onSelect.run();
 		}
 
 		selected = false;
@@ -95,7 +104,7 @@ public class DropDown<E> extends Component {
 		else return super.isOver(p, new Rectangle(r.x, r.y, r.width, r.height*(options.size()+1)));
 	}
 	
-	public Map.Entry<String, E> getOptionAt(int i) {
+	private Map.Entry<String, E> getOptionAt(int i) {
 		int z = 0;
 		for (Map.Entry<String, E> m : options.entrySet()) {
 			if (z==i) return m;

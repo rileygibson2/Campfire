@@ -1,4 +1,4 @@
-package device;
+package server.device;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 
 import general.CLI;
 import general.Code;
-import general.Message;
 import general.Utils;
+import server.Message;
 
 public class DeviceListener extends Thread {
 	Device d;
@@ -33,7 +33,7 @@ public class DeviceListener extends Thread {
 	}
 	
 	public void respond(Message m) {
-		CLI.print(this, m.code+" recieved");
+		//CLI.print(this, m.code+" recieved");
 		switch (m.code) {
 		case CallAccept:
 			break;
@@ -57,7 +57,7 @@ public class DeviceListener extends Thread {
 			break;
 		case IAm:
 			d.name = m.message;
-			CLI.print(this, "New device with name "+d.name);
+			//CLI.print(this, "New device with name "+d.name);
 			d.s.updateClients();
 			break;
 		case WhoIs:

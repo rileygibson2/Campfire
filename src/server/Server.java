@@ -6,11 +6,10 @@ import java.net.Socket;
 import java.util.HashSet;
 import java.util.Set;
 
-import device.Device;
 import general.CLI;
-import general.Call;
 import general.Code;
 import general.Utils;
+import server.device.Device;
 
 public class Server {
 
@@ -68,7 +67,7 @@ public class Server {
 	}
 
 	public void shutdown() {
-		CLI.print(this, "Shutting down...");
+		//CLI.print(this, "Shutting down...");
 		try {
 			if (serverSocket.isBound()) serverSocket.close();
 			for (Device d : devices) {
@@ -76,7 +75,7 @@ public class Server {
 			}
 		}
 		catch (IOException e) {System.out.println(e.toString());}
-		CLI.print(this, "Done.");
+		//CLI.print(this, "Done.");
 	}
 
 	public static void main(String[] args) throws Exception {
