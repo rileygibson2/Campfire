@@ -1,24 +1,31 @@
 package threads;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import client.Client;
 
 public class ThreadController extends Thread {
 
-	private Object target;
-
 	private boolean stop;
 	private boolean hasRun; //Stops same thread attempting to run twice and throwing an error
-	private int wait = 20;
+	private int initialDelay;
+	private int wait = 20; //Wait for each iteration
+	private boolean iteratePaint; //Whether to paint upon iteration
 
-	Set<Object> elements; //Generic list of elements an animation can use
-	private int i;
+	private Object target; //Target object of animation
+	List<Object> extras; //A list of extra parameters that can be passed in beyond the target if needed
+	Set<Object> elements; //Generic list of thread created elements a thread can use
+	private int i; //Thread clock
+	
+	private Runnable finishAction;
 
 	public ThreadController() {
 		this.stop = false;
 		this.hasRun = false;
+		initialDelay = 0;
+		iteratePaint = true;
 	}
 
 	@Override
@@ -36,7 +43,9 @@ public class ThreadController extends Thread {
 
 	public boolean hasRun() {return this.stop&&this.hasRun;}
 
-	public void setSpeed(int s) {this.wait = s;}
+	public void setWait(int wait) {this.wait = wait;}
+	
+	public void setInitialDelay(int d) {this.initialDelay = d;}
 
 	public boolean hasElements() {return elements!=null;}
 
@@ -46,16 +55,29 @@ public class ThreadController extends Thread {
 	
 	public void setTarget(Object t) {this.target = t;}
 	
+	public void setExtras(List<Object> extras) {this.extras = extras;}
+	
 	public int getIncrement() {return this.i;}
+	
+	public void setFinishAction(Runnable r) {this.finishAction = r;}
+	
+	public void setPaintOnIterate(boolean p) {iteratePaint = p;}
 
+	public void doInitialDelay() {
+		if (initialDelay>0) {
+			try {Thread.sleep(initialDelay);}
+			catch (InterruptedException e) {e.printStackTrace();}
+		}
+	}
+	
 	public void iterate() {
 		i++;
-		Client.cGUI.repaint();
+		if (iteratePaint) Client.cGUI.repaint();
 		try {Thread.sleep(wait);}
 		catch (InterruptedException e) {e.printStackTrace();}
 	}
 
 	public void finish() {
-
+		if (finishAction!=null) finishAction.run();
 	}
 }

@@ -12,6 +12,7 @@ import javax.sound.sampled.Mixer;
 
 import client.AudioManager;
 import client.Client;
+import client.gui.GUI;
 import client.gui.ScreenUtils;
 import client.gui.components.Button;
 import client.gui.components.DropDown;
@@ -35,10 +36,10 @@ public class SettingsView extends View {
 		int x = 6;	
 		
 		//Input dropdown
-		components.add(new Label(new Point(x, 15), "Microphone", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200), this));
-		audioIn = new DropDown<>(new Rectangle(x, 18, 40, 15), this);
-		audioIn.components.add(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png", audioIn));
-		components.add(audioIn);
+		addComponent(new Label(new Point(x, 12), "Microphone", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		audioIn = new DropDown<>(new Rectangle(x, 18, 40, 15));
+		audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+		addComponent(audioIn);
 
 		//Actions
 		audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
@@ -51,10 +52,10 @@ public class SettingsView extends View {
 		audioIn.setUpdateAction(update);
 
 		//Output dropdown
-		components.add(new Label(new Point(x, 45), "Speaker", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200), this));
-		audioOut = new DropDown<Mixer.Info>(new Rectangle(x, 48, 40, 15), this);
-		audioOut.components.add(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png", audioOut));
-		components.add(audioOut);
+		addComponent(new Label(new Point(x, 42), "Speaker", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		audioOut = new DropDown<Mixer.Info>(new Rectangle(x, 48, 40, 15));
+		audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+		addComponent(audioOut);
 
 		//Actions
 		audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
@@ -67,21 +68,21 @@ public class SettingsView extends View {
 		audioOut.setUpdateAction(update);
 
 		//Remote dropdown
-		components.add(new Label(new Point(x, 75), "Remote", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200), this));
-		remote = new DropDown<>(new Rectangle(x, 78, 40, 15), this);
-		remote.components.add(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png", remote));
-		components.add(remote);
+		addComponent(new Label(new Point(x, 72), "Remote", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		remote = new DropDown<>(new Rectangle(x, 78, 40, 15));
+		remote.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+		addComponent(remote);
 
-		//Server textbox
+		//Port textbox
 		x = 55;
-		components.add(new Label(new Point(x, 15), "Server", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200), this));
-		components.add(new TextBox(Client.ipRegex, new Rectangle(x, 18, 40, 15), this));
+		addComponent(new Label(new Point(x, 12), "Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		addComponent(new TextBox(new Rectangle(x, 18, 40, 15), "", Client.ipRegex));
 
 		//Exit button
-		Button b = new Button(new Rectangle(92, 4, 6, 12), new Color(100, 100, 100), this);
+		Button b = new Button(new Rectangle(92, 4, 6, 12), new Color(100, 100, 100));
 		b.setClickAction(() -> Client.cGUI.changeView(HomeView.getInstance()));
-		b.components.add(new Image(new Rectangle(10, 10, 80, 80), "exit.png", b));
-		components.add(b);
+		b.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
+		addComponent(b);
 	}
 
 	public static SettingsView getInstance() {
@@ -96,20 +97,8 @@ public class SettingsView extends View {
 	}
 
 	@Override
-	public void destroy() {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void doMove(Point p) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
 	public void draw(Graphics2D g) {
-		ScreenUtils.fillRoundRect(g, bg, r);
+		GUI.getInstance().getScreenUtils().fillRoundRect(g, bg, getRec());
 		super.draw(g);
 	}
 }

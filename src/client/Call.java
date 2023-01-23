@@ -1,53 +1,93 @@
 package client;
 
+import javax.sound.sampled.SourceDataLine;
+
 import client.gui.views.CallView;
 import client.gui.views.HomeView;
+import general.CLI;
 import general.Utils;
+import network.Code;
+import network.ConnectionHandler;
+import network.Message;
 import threads.ThreadController;
 
 public class Call {
-	
-	Client c;
+
+	private ConnectionHandler cH;
 	CallView cV;
 	ThreadController audio;
-	ThreadController checker;
-	
-	byte[] buffer;
-	
-	public Call(Client c) {
-		this.c = c;
-		buffer = new byte[AudioManager.blockLength];
+	SourceDataLine speakerLine;
+
+	byte[] data;
+
+	public Call(ConnectionHandler cH) {
+		this.cH = cH;
+		cH.setOnUpdate(() -> handleData());
+		data = new byte[AudioManager.blockLength];
 	}
-	
-	public void startCall() {
+
+	public ConnectionHandler getConnectionHandler() {return cH;}
+
+	public void start() {
 		//Deal with GUI
 		cV = new CallView();
 		Client.cGUI.changeView(cV);
-		
-		//Start reader
-		audio = AudioManager.getInstance().getMicrophoneReader(buffer);
+
+		//Check connection is listening
+		if (!cH.isListening()) cH.start();
+
+		//Get speaker components
+		speakerLine = AudioManager.getInstance().getSpeakerWriter();
+
+		//Start mic reader
+		audio = AudioManager.getInstance().getMicrophoneReader(data, () -> handleMicData());
 		audio.start();
-		
-		checker = new ThreadController() {
-			@Override
-			public void run() {
-				while (isRunning()) {
-					int[] data = Utils.decodeAmplitude(AudioManager.format, buffer);
-					data = Utils.averageAndShrinkAndScale(data, 2, cV.dataBounds);
-					cV.addData(data);
-					
-					//System.out.println(data.length+": "+Arrays.toString(data)+"\n\n\n\n\n\n");
-					try {Thread.sleep(10);}
-					catch (InterruptedException e) {e.printStackTrace();}
-				}
-			}
-		};
-		checker.start();
 	}
-	
-	public void stopCall() {
-		if (checker!=null) checker.end();
+
+	/**
+	 * Handles data coming in from the AudioManager
+	 */
+	public void handleMicData() {
+		cH.write(data);
+	}
+
+	/**
+	 * Handles data coming in from the ConnectionHandler
+	 */
+	public void handleData() {
+		byte[] data = cH.getData();
+
+		//Check for codes
+		Message m = Message.decode(data);
+		if (m!=null) {
+			CLI.debug("Recieved: "+m.toString());
+			switch (m.getCode()) {
+			case CallEnd:
+				cH.write(new Message(Code.CallEndAck));
+				Client.getInstance().endCall(false);
+				return;
+			case CallError:
+				cH.write(new Message(Code.CallErrorAck));
+				Client.getInstance().endCall(false);
+				return;
+			default:
+				break;
+			}
+		}
+
+		//Write to mic
+		//CLI.debug("S"+speakerLine.isOpen()+speakerLine.isActive());
+		speakerLine.write(data, 0, data.length);
+		
+		//Pass to view
+		int[] decoded = Utils.decodeAmplitude(AudioManager.format, data);
+		decoded = Utils.averageAndShrinkAndScale(decoded, 2, cV.dataBounds);
+		cV.addData(decoded);
+	}
+
+	public void destroy() {
 		if (audio!=null) audio.end();
+		AudioManager.getInstance().releaseSpeakerWriter();
 		Client.cGUI.changeView(HomeView.getInstance());
 	}
 }

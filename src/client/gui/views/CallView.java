@@ -5,9 +5,12 @@ import java.awt.Graphics2D;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import client.Client;
+import client.gui.GUI;
 import client.gui.ScreenUtils;
+import client.gui.components.Image;
 import client.gui.components.SimpleBox;
-import client.gui.components.XboxButton;
+import client.gui.components.GradientButton;
 import general.Point;
 import general.Rectangle;
 import threads.AnimationFactory;
@@ -19,17 +22,23 @@ public class CallView extends View {
 	private Deque<Double> data; //Voice data
 	public int dataLen; //Length of data structure (actual deque may not always be that length)
 	public Point dataBounds; //Upper and lower bound of data
-
+	
 	SimpleBox dataBox; //Bounding component when drawing data
 	ThreadController paintAni; //Shifts data along as time goes on
 
 	public CallView() {
 		super(ViewType.Call, new Rectangle(0, 0, 100, 100));
 		initialiseData();
-
-		components.add(new XboxButton(new Rectangle(75, 40, 10, 20), "B", new Color(126, 0, 14), new Color(191, 0, 9), this));
-		dataBox = new SimpleBox(new Rectangle(0, 15, 70, 70), this);
-		components.add(dataBox);
+		
+		GradientButton b = new GradientButton(new Rectangle(75, 38, 12, 24), new Color(126, 0, 14), new Color(191, 0, 9));
+		b.setClickAction(() -> Client.getInstance().endCall(true));
+		b.addComponent(new Image(new Rectangle(17.5, 17.5, 65, 65), "exit.png"));
+		
+		b.freezeShadow();
+		addComponent(b);
+		
+		dataBox = new SimpleBox(new Rectangle(0, 10, 70, 80));
+		addComponent(dataBox);
 		paintAni = AnimationFactory.getAnimation(40, Animations.Paint);
 	}
 
@@ -67,17 +76,12 @@ public class CallView extends View {
 	@Override
 	public void destroy() {
 		if (paintAni!=null&&paintAni.isRunning()) paintAni.end();
-	}
-
-	@Override
-	public void doMove(Point p) {
-		// TODO Auto-generated method stub
-
+		super.destroy();
 	}
 
 	@Override
 	public void draw(Graphics2D g) {
-		ScreenUtils.drawDataWave(g, this, dataBox);
+		GUI.getInstance().getScreenUtils().drawDataWave(g, this, dataBox);
 		super.draw(g);
 	}
 }

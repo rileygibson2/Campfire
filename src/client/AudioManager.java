@@ -1,15 +1,17 @@
 package client;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Semaphore;
 
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.DataLine;
+import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.Mixer;
@@ -21,10 +23,11 @@ import general.Utils;
 import threads.ThreadController;
 
 public class AudioManager {
-	
+
 	private static AudioManager singleton;
-	
 	static AudioFormat format;
+	private Semaphore micLock;
+	private Semaphore speakerLock;
 
 	//Infos
 	private LinkedHashMap<String, Mixer.Info> inMixers;
@@ -36,24 +39,41 @@ public class AudioManager {
 	private TargetDataLine micLine;
 	private SourceDataLine speakerLine;
 	final static int blockLength = 1024;
-	//44100
+
+	//Controls
+	private boolean mute;
+	private double volume;
 
 	private AudioManager() {
 		format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
 		micLineInfo = null;
 		speakerLineInfo = null;
+		micLock = new Semaphore(1);
+		speakerLock = new Semaphore(1);
+		mute = false;
+		volume = 75;
 
 		enumerateMicrophones();
 		enumerateSpeakers();
-		CLI.debug("INS: "+inMixers);
-		CLI.debug("OUTS: "+outMixers);
 		if (getDefaultMic()!=null) micLineInfo = getDefaultMic().getValue();
 		if (getDefaultSpeaker()!=null) speakerLineInfo = getDefaultSpeaker().getValue();
 	}
-	
+
 	public static AudioManager getInstance() {
 		if (singleton==null) singleton = new AudioManager();
 		return singleton;
+	}
+
+	public void mute() {mute = true;}
+	public void unmute() {mute = false;}
+	public boolean isMuted() {return mute;}
+
+	public double getVolume() {return volume;}
+
+	public void setVolume(double v) {
+		volume = v;
+		if (volume<0) volume = 0;
+		if (volume>100) volume = 100;
 	}
 
 	public Map.Entry<String, Mixer.Info> getDefaultMic() {
@@ -105,23 +125,31 @@ public class AudioManager {
 		enumerateSpeakers();
 		return outMixers;
 	}
-	
+
 	public void setMicLineInfo(Mixer.Info m) {
+		if (m==null) {
+			CLI.error("Cannot set micline info to null!");
+			return;
+		}
 		this.micLineInfo = m;
 		CLI.debug("New Microphone Line: "+m.getName());
 	}
-	
+
 	public void setSpeakerLineInfo(Mixer.Info m) {
+		if (m==null) {
+			CLI.error("Cannot set speakerline info to null!");
+			return;
+		}
 		this.speakerLineInfo = m;
 		CLI.debug("New Speaker Line: "+m.getName());
 	}
-	
+
 	public TargetDataLine getTargetLine(Mixer.Info info) {
 		try {
-			CLI.debug("Obtaining target line from: "+info.getName());
+			//CLI.debug("Obtaining target line from: "+info.getName());
 			Mixer mixer = AudioSystem.getMixer(info);
 			Line.Info[] targetLineInfos = mixer.getTargetLineInfo();
-			
+
 			if (targetLineInfos.length==0) {
 				CLI.error("Mixer "+info.getName()+" was requested for a target line and has none.");
 				return null;
@@ -129,15 +157,15 @@ public class AudioManager {
 			return (TargetDataLine) mixer.getLine(targetLineInfos[0]);
 		}
 		catch (LineUnavailableException ex) {ex.printStackTrace(); return null;}
-	
+
 	}
-	
+
 	public SourceDataLine getSourceLine(Mixer.Info info) {
 		try {
-			CLI.debug("Obtaining source line from: "+info.getName());
+			//CLI.debug("Obtaining source line from: "+info.getName());
 			Mixer mixer = AudioSystem.getMixer(info);
 			Line.Info[] sourceLineInfos = mixer.getSourceLineInfo();
-			
+
 			if (sourceLineInfos.length==0) {
 				CLI.error("Mixer "+info.getName()+" was requested for a source line and has none.");
 				return null;
@@ -148,82 +176,141 @@ public class AudioManager {
 		catch (LineUnavailableException ex) {ex.printStackTrace(); return null;}
 	}
 
-	public ThreadController getMicrophoneReader(byte[] buffer) {
+	public void applyVolume(SourceDataLine speakerLine) {
+		if (speakerLine.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+			FloatControl volumeControl = (FloatControl) speakerLine.getControl(FloatControl.Type.MASTER_GAIN);
+
+			float newVolume = (float) (volume/100);
+			float dB = (float) (Math.log(newVolume) / Math.log(10.0) * 20.0);
+			volumeControl.setValue(dB);
+		}
+		else CLI.error("Could not change line volume as gain not supported");
+	}
+
+	public SourceDataLine getSpeakerWriter() {
+		try {
+			speakerLock.acquire();
+			if (speakerLineInfo==null) {
+				CLI.error("Speaker Line Info is null");
+				return null;
+			}
+			speakerLine = getSourceLine(speakerLineInfo);
+			speakerLine.open(format);
+			speakerLine.start();
+			applyVolume(speakerLine);
+			return speakerLine;
+		}
+		catch (LineUnavailableException | InterruptedException e) {CLI.error("Error getting speaker writer - "+e.getMessage());}
+		
+		return null;
+	}
+	
+	public void releaseSpeakerWriter() {
+		speakerLock.release();
+		if (speakerLine!=null) {
+			speakerLine.close();
+			speakerLine = null;
+		}
+	}
+
+	public ThreadController getMicrophoneReader(byte[] buffer, Runnable updateAction) {
 		return new ThreadController() {
 			@Override
 			public void run() {
 				try {
-					//TargetDataLine microphone = AudioSystem.getTargetDataLine(format);
-					if (micLineInfo==null) throw new Error("Mic Line Info is null");
+					micLock.acquire();
+					
+					if (micLineInfo==null) {
+						CLI.error("Mic Line Info is null");
+						return;
+					}
 					micLine = getTargetLine(micLineInfo);
 					micLine.open(format);
 					micLine.start();
 
-					//DataLine.Info speakerInfo = new DataLine.Info(SourceDataLine.class, format);
-					//SourceDataLine speakers = (SourceDataLine) AudioSystem.getLine(speakerInfo);
-					
-					if (speakerLineInfo==null) throw new Error("Speaker Line Info is null");
-					speakerLine = getSourceLine(speakerLineInfo);
-					speakerLine.open(format);
-					speakerLine.start(); 
-					
 					// Capture audio data and save it to the file
 					while (isRunning()) {
 						if (micLine==null) {
 							CLI.error("Mic became null while running");
-							return;
+							break;
 						}
 						int bytesRead = micLine.read(buffer, 0, buffer.length);
-						if (speakerLine!=null) speakerLine.write(buffer, 0, bytesRead);
+						if (updateAction!=null) updateAction.run();
 					}
-					
-					//Release and reset
-					speakerLine.close();
-					speakerLine = null;
-					micLine.drain();
-					micLine.close();
-					micLine = null;
+
+					if (micLine!=null) {
+						micLine.drain();
+						micLine.close();
+						micLine = null;
+					}
 				}
-				catch (Exception e) {e.printStackTrace();}
+				catch (Exception e) {CLI.error("Error reading microphone - "+e.getMessage());}
+				
+				micLock.release();
 			}
 		};
 	}
-	
+
 	public ThreadController getSoundWriter(String fileName, boolean loop) {
 		return new ThreadController() {
 			@Override
 			public void run() {
 				try {
-		            if (speakerLineInfo==null) throw new Error("Speaker Line Info is null");
+					speakerLock.acquire();
+					
+					if (speakerLineInfo==null) throw new Error("Speaker Line Info is null");
 					speakerLine = getSourceLine(speakerLineInfo);
 					speakerLine.open(format);
 					speakerLine.start(); // Start writing audio data to the speakers
-		            
-					
+					applyVolume(speakerLine);
+
 					// Open the wav file
-		            AudioInputStream audioStream = AudioSystem.getAudioInputStream(Utils.getInputStream("audio/"+fileName));
-		            audioStream.mark(Integer.MAX_VALUE);
-		            
-		            boolean initialPlay = true;
-		            
-		            while (isRunning()&&(initialPlay||loop)) {
-		            	if (initialPlay) initialPlay = false;
-		            	else audioStream.reset();
-		            	
-			            // Read the file and play it
-			            int bytesRead = 0;
-			            byte[] buffer = new byte[1024];
-			            while (bytesRead != -1 && isRunning()) {
-			                bytesRead = audioStream.read(buffer, 0, buffer.length);
-			                if (bytesRead >= 0) speakerLine.write(buffer, 0, bytesRead);
-			            }
-		            }
-		            
-		            audioStream.close();
-		            speakerLine.drain();
-		            speakerLine.close();
-		        }
-				catch (Exception e) { e.printStackTrace();}
+					InputStream in = Utils.getInputStream("audio/"+fileName); 
+					InputStream bufferedIn = new BufferedInputStream(in);
+					AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
+
+					AudioFormat baseFormat = audioStream.getFormat();
+					AudioFormat doubleSpeedFormat = new AudioFormat(
+							baseFormat.getEncoding(),
+							(int) (baseFormat.getSampleRate()*0.9), // double the sample rate
+							baseFormat.getSampleSizeInBits(),
+							baseFormat.getChannels(),
+							baseFormat.getFrameSize(),
+							(int) (baseFormat.getFrameRate()*0.9), // double the frame rate
+							baseFormat.isBigEndian());
+					audioStream = AudioSystem.getAudioInputStream(doubleSpeedFormat, audioStream);
+
+					audioStream.mark(Integer.MAX_VALUE);
+
+					boolean initialPlay = true;
+
+					while (isRunning()&&(initialPlay||loop)) {
+						if (initialPlay) initialPlay = false;
+						else audioStream.reset();
+
+						// Read the file and play it
+						int bytesRead = 0;
+						byte[] buffer = new byte[1024];
+
+						while (bytesRead != -1 && isRunning()) {
+							if (speakerLine==null) {
+								CLI.error("Speakerline became null while playing file");
+								break;
+							}
+							bytesRead = audioStream.read(buffer, 0, buffer.length);
+							if (bytesRead >= 0) speakerLine.write(buffer, 0, bytesRead);
+						}
+					}
+
+					audioStream.close();
+					if (speakerLine!=null) {
+						speakerLine.drain();
+						speakerLine.close();
+					}
+				}
+				catch (Exception e) {CLI.error("Error playing sound - "+e.getMessage());}
+				
+				speakerLock.release();
 			}
 		};
 	}

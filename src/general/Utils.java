@@ -1,19 +1,15 @@
 package general;
 
-import java.io.File;
+import java.awt.Cursor;
 import java.io.InputStream;
+import java.util.Arrays;
 
 import javax.sound.sampled.AudioFormat;
 
+import client.gui.GUI;
+import network.Code;
+
 public class Utils {
-
-	public static String format(Code c) {
-		return c.c+":"+" ";
-	}
-
-	public static String format(Code c, String message) {
-		return c.c+":"+message;
-	}
 
 	public static Code getCode(String c) {
 		for (Code code : Code.values()) {
@@ -24,6 +20,10 @@ public class Utils {
 	
 	public static InputStream getInputStream(String path) {
 		return Utils.class.getClassLoader().getResourceAsStream(path);
+	}
+	
+	public static void setCursorDefault(int c) {
+		GUI.frame.setCursor(Cursor.getPredefinedCursor(c));
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package general;
 
+import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class CLI {
 		colors.put("ThreadController", magenta);
 		colors.put("Ring", gray);
 		colors.put("Call", cyan);
+		colors.put("DOM", cyan);
 		initialised = true;
 	}
 	
@@ -35,8 +37,7 @@ public class CLI {
 		if (!initialised) initialise();
 		String time = new SimpleDateFormat("hh:mm:ss").format(new Date()); 
 		String name = getCallerClassName();
-		String color = colors.get(name);
-		if (color==null) color = magenta;
+		String color = getColor(name);
 		System.out.println("["+bold+color+name.toUpperCase()+" - "+time+reset+"] "+message);
 	}
 
@@ -45,6 +46,13 @@ public class CLI {
 		String time = new SimpleDateFormat("hh:mm:ss").format(new Date());
 		String name = getCallerClassName();
 		System.out.println("["+bold+red+"ERROR - "+name.toUpperCase()+" - "+time+reset+"] "+message);
+	}
+	
+	public static String getColor(String name) {
+		for (Map.Entry<String, String> m : colors.entrySet()) {
+			if (name.toLowerCase().contains(m.getKey().toLowerCase())) return m.getValue();
+		}
+		return magenta;
 	}
 	
 	public static String getCallerClassName() { 

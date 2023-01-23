@@ -2,11 +2,15 @@ package threads;
 
 
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import client.gui.components.Button;
+import client.gui.components.Component;
 import client.gui.components.TextBox;
+import general.CLI;
 import general.Pair;
 import general.Point;
 import general.Rectangle;
@@ -14,91 +18,170 @@ import general.Rectangle;
 public class AnimationFactory {
 
 	public static enum Animations {
-		HoverButton,
-		UnhoverButton,
-		PulseButton,
-		CursorBlip,
-		Paint
+		//Generics
+		Paint,
+		MoveTo,
+		Transform,
+		Fade,
+
+		//Special
+		PulseRings,
+		CursorBlip
 	}
 
-	public static ThreadController getAnimation(Object target, Animations t) {
+	private AnimationFactory() {};
+
+	public static ThreadController getAnimation(Object target, Animations t, Object... extras) {
 		ThreadController tC = getThread(t);
 		tC.setTarget(target);
+		if (extras.length>0) tC.setExtras(Arrays.asList(extras));
+
 		return tC;
 	}
 
-	public static ThreadController getAnimation(Animations t) {
+	public static ThreadController getAnimation(Animations t, Object... extras) {
 		return getThread(t);
 	}
 
 	private static ThreadController getThread(Animations t) {
 		switch (t) {
-		case HoverButton: return hoverButton();
-		case UnhoverButton: return unhoverButton();
-		case PulseButton: return pulseButton();
+		case PulseRings: return pulseRings();
 		case CursorBlip: return cursorBlip();
 		case Paint: return paint();
+		case MoveTo: return moveTo();
+		case Transform: return transform();
+		case Fade: return fade();
 		}
 		return null;
 	}
+	
+	public static double sineCurve(double startValue, double endValue, double p) {
+		double theta = Math.PI * (p/100);
+		double curvedT = (1 - Math.cos(theta))/2;
+		return startValue + (endValue - startValue) * curvedT;
+	}
 
-	final static ThreadController unhoverButton() {
+	//Generic animations
+
+	final static ThreadController moveTo() {
 		return new ThreadController() {
 			@Override
 			public void run() {
-				Button b = (Button) getTarget();
+				doInitialDelay();
+				Component c = (Component) getTarget();
+				Point to = (Point) extras.get(0);
+				Rectangle start = c.getRec().clone();
+				
+				double p = 0;
+				int increment = 2;
+				if (extras.size()>1) increment = (int) extras.get(1);
 
 				while (isRunning()) {
-					if (b.r.width<=b.rO.width&&b.r.height<=b.rO.height) {
-						end();
-						b.r = new Rectangle(b.rO.x, b.rO.y, b.rO.width, b.rO.height);
-					}
-					else {
-						b.r.width = b.r.width-1;
-						b.r.height = b.r.height-1;
-					}
+					p += increment;
+					c.setX(sineCurve(start.x, to.x, p));
+					c.setY(sineCurve(start.y, to.y, p));
+
+					if (p>=100) end();
 					iterate();
 				}
+				finish();
+			}
+		};
+	}
+	
+	final static ThreadController transform() {
+		return new ThreadController() {
+			@Override
+			public void run() {
+				doInitialDelay();
+				Component c = (Component) getTarget();
+				Rectangle to = (Rectangle) extras.get(0);
+				Rectangle start = c.getRec().clone();
+				
+				double p = 0;
+				int increment = 2;
+				if (extras.size()>1) increment = (int) extras.get(1);
 
-				b.hoverAni = null;
+				while (isRunning()) {
+					p += increment;
+					c.setX(sineCurve(start.x, to.x, p));
+					c.setY(sineCurve(start.y, to.y, p));
+					c.setWidth(sineCurve(start.width, to.width, p));
+					c.setHeight(sineCurve(start.height, to.height, p));;
+
+					if (p>=100) end();
+					iterate();
+				}
+				finish();
+			}
+		};
+	}
+	
+	final static ThreadController fade() {
+		return new ThreadController() {
+			@Override
+			public void run() {
+				doInitialDelay();
+				Component[] components;
+				if (getTarget() instanceof Component[]) components = (Component[]) getTarget();
+				else if (getTarget() instanceof Component) components = new Component[] {(Component) getTarget()};
+				else {
+					CLI.error("Wrong cast in fade animation");
+					return;
+				}
+				
+				int to = (Integer) extras.get(0);
+				List<Double> start = new ArrayList<>();
+				for (Component c : components) start.add(c.getOpacity());
+				
+				double p = 0;
+				int increment = 2;
+				if (extras.size()>1) increment = (int) extras.get(1);
+
+				while (isRunning()) {
+					p += increment;
+					for (int i=0; i<components.length; i++) {
+						components[i].setOpacity(sineCurve(start.get(i), to, p));
+					}
+
+					if (p>=100) end();
+					iterate();
+				}
 				finish();
 			}
 		};
 	}
 
-	final static ThreadController hoverButton() {
+	final static ThreadController paint() {
 		return new ThreadController() {
 			@Override
 			public void run() {
-				Button b = (Button) getTarget();
-
-				while (isRunning()) {
-					if (b.r.width>=b.rO.width*1.2&&b.r.height>=b.rO.height*1.2) end();
-					else {
-						b.r.width = b.r.width+1;
-						b.r.height = b.r.height+1;
-					}
-					iterate();
-				}
-
-				b.hoverAni = null;
+				doInitialDelay();
+				while (isRunning()) iterate();
 				finish();
 			}
 		};
 	}
 
-	final static ThreadController pulseButton() {
+	//Special animations
+	final static ThreadController pulseRings() {
 		return new ThreadController() {
 			@Override
 			public void run() {
+				doInitialDelay();
 				elements = new HashSet<Object>(); //One point for each pulse, x is opacity, y is rad
+
 				while (isRunning()) {
-					//Add new bubble
-					if (((getIncrement()-62)/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), new Color(0, 220, 50)));
-					if ((getIncrement()/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), new Color(0, 200, 100)));
+					@SuppressWarnings("unchecked")
+					Pair<Color, Color> cols = (Pair<Color, Color>) extras.get(0);
+
+					//Add new bubbles
+					if (((getIncrement()-62)/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), cols.a));
+					if ((getIncrement()/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), cols.b));
 
 					Set<Object> toRemove = new HashSet<>();
 					for (Object o : elements) {
+						@SuppressWarnings("unchecked")
 						Pair<Point, Color> pa = (Pair<Point, Color>) o;
 						Point p = pa.a;
 						p.y += 0.1; //Expand bubble
@@ -119,28 +202,20 @@ public class AnimationFactory {
 		return new ThreadController() {
 			@Override
 			public void run() {
+				doInitialDelay();
 				TextBox t = (TextBox) getTarget();
+
 				while (isRunning()) {
 					if (t.cursor.isEmpty()) t.cursor = "_";
 					else t.cursor = "";
-					t.textLabel.text = t.text+t.cursor;
+					t.textLabel.text = t.getText()+t.cursor;
 
 					iterate();
 				}
 
 				//Reset
 				t.cursor = "";
-				t.textLabel.text = t.text;
-				finish();
-			}
-		};
-	}
-
-	final static ThreadController paint() {
-		return new ThreadController() {
-			@Override
-			public void run() {
-				while (isRunning()) iterate();
+				t.textLabel.text = t.getText();
 				finish();
 			}
 		};

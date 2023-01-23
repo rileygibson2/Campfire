@@ -1,78 +1,72 @@
 package client.gui.components;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Graphics2D;
-import java.awt.event.KeyEvent;
 
-import client.gui.Element;
+import client.gui.GUI;
 import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
+import general.Utils;
+import threads.AnimationFactory;
+import threads.AnimationFactory.Animations;
 import threads.ThreadController;
 
 public class Button extends Component {
 
-	boolean isHovered;
-	public ThreadController hoverAni;
 	public Color col;
-	public Runnable onClick;
-	
-	public String iconSrc;
-	public Rectangle iconR;
+	public ThreadController hoverAni;
+	public ThreadController unHoverAni;
+	public boolean drawBox;
 
-	public Button(Rectangle r, Color col, Element parent) {
-		super(r, parent);
+	public Button(Rectangle r, Color col) {
+		super(r);
 		this.col = col;
-		isHovered = false;
-		hoverAni = null;
-	}
-	
-	public void setClickAction(Runnable onClick) {
-		this.onClick = onClick;
+		drawBox = true;
 	}
 
+	@Override
 	public void doClick(Point p) {
-		if (onClick!=null) onClick.run();
+		Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+		super.doClick(p);
 	};
 
 
 	@Override
 	public void doHover() {
-//		if (!isHovered) {
-//			isHovered = true;
-//			if (hoverAni!=null) {
-//				hoverAni.stop();
-//				hoverAni = null;
-//			}
-//			hoverAni = new Animation(this, Threads.HoverButton);
-//			hoverAni.start();
-//		}
+		if (isHoverPaused()) return;
+		if (!isHovered()) {
+			if (unHoverAni!=null) unHoverAni.end();
+			hoverAni = AnimationFactory.getAnimation(this, Animations.Transform, new Rectangle(r.x-(r.width*0.1), r.y-(r.height*0.1), r.width*1.2, r.height*1.2), 15);
+			hoverAni.start();
+			Utils.setCursorDefault(Cursor.HAND_CURSOR);
+		}
+		super.doHover();
 	}
 
 	@Override
 	public void doUnhover() {
-//		if (isHovered) {
-//			isHovered = false;
-//			if (hoverAni!=null) {
-//				hoverAni.stop();
-//				hoverAni = null;
-//			}
-//			if (size.x>sizeO.x&&size.y>sizeO.y) {
-//				hoverAni = new Animation(this, Threads.UnhoverButton);
-//				hoverAni.start();
-//			}
-//		}
+		if (isHoverPaused()) return;
+		if (isHovered()) {
+			if (hoverAni!=null) hoverAni.end();
+			unHoverAni = AnimationFactory.getAnimation(this, Animations.Transform, getOriginalRec().clone(), 15);
+			unHoverAni.start();
+			Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+		}
+		super.doUnhover();
 	}
-	
+
 	@Override
-	public void doKeyPress(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
+	public void destroy() {
+		if (hoverAni!=null) hoverAni.end();
+		if (unHoverAni!=null) unHoverAni.end();
+		super.destroy();
 	}
 
 	@Override
 	public void draw(Graphics2D g) {
-		ScreenUtils.drawButton(g, this);
+		if (drawBox) GUI.getInstance().getScreenUtils().drawButton(g, this);
 		super.draw(g);
 	}
 }
