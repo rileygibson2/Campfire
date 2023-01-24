@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cli.CLI;
-import client.Client;
 import client.gui.components.Component;
 import general.Point;
 
@@ -78,12 +77,6 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 	@Override
 	public void keyTyped(KeyEvent e) {
 		for (Component c : keyListeners) c.doKeyPress(e);
-		//if (e.getExtendedKeyCode()==KeyEvent.VK_R) Client.getInstance().startRing(true);
-		/*if (e.getExtendedKeyCode()==KeyEvent.VK_H) {
-			Client.getInstance().endCall();
-			Client.getInstance().endRing();
-		}*/
-		
 		if (e.getExtendedKeyCode()==KeyEvent.VK_C) {
 			if (CLI.viewerActive()) CLI.showViewer(false);
 			else CLI.showViewer(true);

@@ -19,6 +19,7 @@ public class Call {
 	CallView cV;
 	ThreadController audio;
 	SourceDataLine speakerLine;
+	boolean ended; //Used to avoid errors from threads still executing after call has ended
 
 	byte[] data;
 
@@ -26,6 +27,7 @@ public class Call {
 		this.c = c;
 		c.setOnUpdate(() -> handleData());
 		data = new byte[AudioManager.blockLength];
+		ended = false;
 	}
 
 	/**
@@ -35,7 +37,7 @@ public class Call {
 	 * 
 	 * @return
 	 */
-	public Connection stealConectionHandler() {
+	public Connection stealConnectionHandler() {
 		Connection c = this.c;
 		this.c = null;
 		return c;
@@ -61,6 +63,10 @@ public class Call {
 	 * Handles data coming in from the AudioManager
 	 */
 	public void handleMicData() {
+		if (c==null) {
+			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			return;
+		}
 		c.write(data);
 	}
 
@@ -69,7 +75,7 @@ public class Call {
 	 */
 	public void handleData() {
 		if (c==null) {
-			if (!Client.isShuttingdown()) CLI.error("Ring unexpectedly became null");
+			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 		byte[] data = c.getData();
@@ -87,7 +93,7 @@ public class Call {
 			case CallError:
 				c.write(new Message(Code.CallErrorAck));
 				Client.getInstance().destroyAll(); //Reset client
-				GUI.getInstance().addMessage("There was an error with the ring", MessageBox.error);
+				GUI.getInstance().addMessage("There was an error with the call", MessageBox.error);
 				return;
 				
 			case Ping:
@@ -110,6 +116,7 @@ public class Call {
 	}
 
 	public void destroy() {
+		ended = true;
 		if (audio!=null) audio.end();
 		if (c!=null) c.close();
 		AudioManager.getInstance().releaseSpeakerWriter();

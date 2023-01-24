@@ -2,7 +2,6 @@ package client.gui.components;
 
 import java.awt.Color;
 
-import cli.CLI;
 import general.Point;
 import general.Rectangle;
 

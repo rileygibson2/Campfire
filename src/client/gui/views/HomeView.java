@@ -2,8 +2,9 @@ package client.gui.views;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
-import cli.CLI;
 import client.AudioManager;
 import client.Client;
 import client.Special.Type;
@@ -15,6 +16,7 @@ import client.gui.components.PopUp;
 import client.gui.components.SimpleBox;
 import client.gui.components.Slider;
 import client.gui.components.TextBox;
+import general.Functional;
 import general.Point;
 import general.Rectangle;
 import network.NetworkManager;
@@ -126,12 +128,12 @@ public class HomeView extends View {
 			extras.addComponent(extrasPopup);
 			
 			Button b1 = new Button(new Rectangle(10, 17.5, 25, 65), new Color(250, 180, 50));
-			b1.setClickAction(() -> Client.getInstance().startSpecial(Type.PinaColada));
+			b1.setClickAction(() -> Client.getInstance().startInitiatingSpecial(Type.PinaColada));
 			b1.addComponent(new Image(new Rectangle(12, 12, 70, 70), "drink.png"));
 			extrasPopup.addComponent(b1);
 			
 			b1 = new Button(new Rectangle(45, 17.5, 25, 65), new Color(50, 220, 50));
-			b1.setClickAction(() -> Client.getInstance().startSpecial(Type.Smoko));
+			b1.setClickAction(() -> Client.getInstance().startInitiatingSpecial(Type.Smoko));
 			b1.addComponent(new Image(new Rectangle(15, 8, 70, 80), "coffee.png"));
 			extrasPopup.addComponent(b1);
 		});
@@ -147,12 +149,16 @@ public class HomeView extends View {
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
-			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP(), Client.ipRegex);
+			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP());
+			
+			t.setActions(new Functional<String, String>() {
+				public void submit(String s) {Client.setIP(s);}
+				public String get() {return Client.getIP();}
+			});
+			
 			p.addPopUpComponent(t);
 			p.increasePriority();
-			p.setCloseAction(() -> {
-				Client.setIP(t.getText());
-			});
+			p.setCloseAction(() -> Client.setIP(t.getText()));
 			addComponent(p);
 		});
 		client.setHoverAction(() -> adjustColorHover(client, true));

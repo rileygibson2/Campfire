@@ -1,7 +1,9 @@
 package network;
 
+
 import cli.CLI;
 import client.Client;
+import client.Special.Type;
 
 public class ConnectionRouter {
 	
@@ -28,6 +30,27 @@ public class ConnectionRouter {
 			CLI.debug("Routing to recieving ring");
 			c.setOnUpdate(null);
 			Client.getInstance().startRecievingRing(c);
+			break;
+		case SpecialRequest:
+			CLI.debug("Routing to recieving special");
+			int index;
+			try {index = Integer.parseInt(m.getData());}
+			catch (NumberFormatException e) {
+				CLI.error("Invalid special type");
+				c.write(new Message(Code.InvalidSpecialType));
+				return;
+			}
+			
+			Type type;
+			try {type = Type.values()[index];}
+			catch (ArrayIndexOutOfBoundsException e) {
+				CLI.error("Invalid special type");
+				c.write(new Message(Code.InvalidSpecialType));
+				return;
+			}
+			
+			c.setOnUpdate(null);
+			Client.getInstance().startRecievingSpecial(c, type);
 			break;
 		case Ping:
 			c.write(new Message(Code.PingAck));

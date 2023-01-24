@@ -234,7 +234,7 @@ public class AudioManager {
 							if (!Client.isShuttingdown()) CLI.error("Mic became null while running");
 							break;
 						}
-						int bytesRead = micLine.read(buffer, 0, buffer.length);
+						micLine.read(buffer, 0, buffer.length);
 						if (updateAction!=null) updateAction.run();
 					}
 

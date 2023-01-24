@@ -5,10 +5,12 @@ import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import client.gui.GUI;
 import client.gui.IO;
-import client.gui.ScreenUtils;
+import general.Functional;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -20,16 +22,15 @@ public class TextBox extends Component {
 
 	private String text;
 	public Label textLabel;
-	String regex;
+	private Functional<String, String> actions;
 
 	//Cursor
 	private ThreadController cursorAni;
 	public String cursor;
 
 
-	public TextBox(Rectangle rectangle, String initialText, String regex) {
+	public TextBox(Rectangle rectangle, String initialText) {
 		super(rectangle);
-		this.regex = regex;
 		text = initialText;
 		if (text==null) text = "";
 		textLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(200, 200, 200)); 
@@ -37,6 +38,8 @@ public class TextBox extends Component {
 
 		cursor = "";
 	}
+	
+	public void setActions(Functional<String, String> actions) {this.actions = actions;}
 	
 	public String getText() {return text;}
 	
@@ -60,8 +63,14 @@ public class TextBox extends Component {
 	public void doDeselect() {
 		IO.getInstance().deregisterKeyListener(textLabel);;
 		setSelected(false);
-		if (cursorAni!=null && cursorAni.isRunning()) cursorAni.end();
-		if (regex!=null&&!text.matches(regex)) text = "";
+		if (cursorAni!=null) cursorAni.end();
+		
+		//Submit input
+		if (actions!=null) {
+			actions.submit(text); //Submit input
+			text = actions.get(); //Update text
+			textLabel.text = text;
+		}
 		super.doDeselect();
 	}
 	

@@ -45,7 +45,7 @@ public class NetworkManager extends Thread {
 		try {checkFatalError();}
 		catch (ConnectionException e) {return;}
 		
-		//startConnectionChecker();
+		startConnectionChecker();
 		
 		try {
 			Client.getInstance();
@@ -67,7 +67,6 @@ public class NetworkManager extends Thread {
 			}
 		}
 		catch (IOException e) {
-			CLI.debug("C: "+e.getClass());
 			if (!Client.isShuttingdown()) CLI.error("Problem with server socket - "+e.getMessage());
 			if (e.getClass()==BindException.class) GUI.getInstance().addMessage("Something else is using the local port "+Client.getListenPort(), MessageBox.error);
 			setFatalError();
@@ -77,19 +76,24 @@ public class NetworkManager extends Thread {
 	public Connection generateConnection(boolean verbose) throws ConnectionException {
 		checkFatalError();
 		
+		//Preform checks
 		InetAddress localAddress = null;
 		try {localAddress = InetAddress.getLocalHost();} 
 		catch (UnknownHostException e) {CLI.error("Problem getting local address - "+e.getMessage());}
-
+		
 		String ip = Client.getIP();
 		int port = Client.getConnectPort();
 		if (ip==null) throw new ConnectionException("Destination IP is null");
-		if (port==0) throw new ConnectionException("Destination Port is null");
-
+		if (port<1024) throw new ConnectionException("Connect Port is invalid");
+		
+		InetAddress destAddress;
+		try {destAddress = InetAddress.getByName(ip);}
+		catch (UnknownHostException e) {throw new ConnectionException("Destination IP is invalid");}
+		
 		//Check not calling self
-		if (ip.equals(localAddress.getHostAddress())&&port==Client.getListenPort()) throw new ConnectionException("Cannot call self");
-
-		Connection c = Connection.generate(ip, Client.getConnectPort(), verbose);
+		if (localAddress!=null&&ip.equals(localAddress.getHostAddress())&&port==Client.getListenPort()) throw new ConnectionException("Cannot call self");
+		
+		Connection c = Connection.generate(destAddress, Client.getConnectPort(), verbose);
 		if (c!=null) connections.add(c);
 		return c;
 	}
@@ -117,7 +121,7 @@ public class NetworkManager extends Thread {
 				}
 			}
 		};
-		connectionChecker.setWait(5000);
+		connectionChecker.setWait(8000);
 		connectionChecker.start();
 	}
 

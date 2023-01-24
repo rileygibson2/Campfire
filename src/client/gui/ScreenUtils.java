@@ -82,12 +82,11 @@ public class ScreenUtils {
 		Rectangle r = i.getRealRec();
 		
 		BufferedImage img = null;
-		try {img = ImageIO.read(Utils.getInputStream("assets/"+i.src));}
-		catch (IOException e) {
+		try {img = ImageIO.read(Utils.getURL("assets/"+i.src));}
+		catch (IOException | IllegalArgumentException e) {
 			if (!Client.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
 			return;
 		}
-		
 		if (i.getOpacity()<100) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (i.getOpacity()/100)));
 		
 		g.drawImage(img, cW(r.x), cH(r.y), cW(r.width), cH(r.height), null);

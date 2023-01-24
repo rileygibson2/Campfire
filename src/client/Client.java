@@ -1,5 +1,6 @@
 package client;
 
+import java.awt.Color;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -44,8 +45,8 @@ public class Client {
 	}
 
 	/**
-	 * Should only ever be called by the NetworkManager
-	 * @param cH
+	 * Should only ever be called by the ConnectionRouter
+	 * @param c
 	 */
 	public void startRecievingRing(Connection c) {
 		if (ring==null&&call==null&&special==null) {
@@ -54,7 +55,6 @@ public class Client {
 		}
 		else {
 			c.write(new Message(Code.RequestedClientBusy));
-			
 			if (call!=null) CLI.error("In a call, cannot ring");
 			if (special!=null) CLI.error("In special, cannot ring");
 			if (ring!=null) CLI.error("Already in ring, cannot ring");
@@ -68,15 +68,7 @@ public class Client {
 		if (ring==null&&call==null&&special==null) {
 			Connection c = null;
 			try {c = NetworkManager.getInstance().generateConnection(true);}
-			catch (ConnectionException e) {
-				String m = "";
-				if (e.getMessage().contains("Connection refused")) m = "Connection refused";
-				else m = "Error making connection";
-				
-				//Fatal errors have already been reported
-				if (!e.isFatal()) cGUI.addMessage(m, MessageBox.error);
-			}
-			
+			catch (ConnectionException e) {connectionExceptionHandle(e);}
 			if (c==null) return;
 			
 			ring = new Ring(c, false);
@@ -93,8 +85,7 @@ public class Client {
 	 * Called by GUI components
 	 */
 	public void acceptRing() {
-		endSpecial(); //Deal with this
-		ring.accept();
+		if (ring!=null) ring.accept();
 	}
 
 	/**
@@ -118,8 +109,7 @@ public class Client {
 	 */
 	protected void startCall() {
 		if (call==null) {
-			endSpecial(); //Deal with this
-			Connection c = ring.stealConectionHandler(); //Steal from ring
+			Connection c = ring.stealConnectionHandler(); //Steal from ring
 			ring.destroy();
 			ring = null;
 
@@ -139,10 +129,62 @@ public class Client {
 	public void endCall(boolean notify) {
 		if (call!=null) {
 			if (notify) {
-				call.stealConectionHandler().write(new Message(Code.CallEnd));
+				call.stealConnectionHandler().write(new Message(Code.CallEnd));
 				GUI.getInstance().addMessage("You ended the call", MessageBox.info);
 			}
 			else GUI.getInstance().addMessage("They ended the call", MessageBox.info);
+		}
+		destroyAll();
+	}
+
+	/**
+	 * Called by GUI components
+	 * @param type
+	 */
+	public void startInitiatingSpecial(Type type) {
+		if (ring==null&&call==null&&special==null) {
+			Connection c = null;
+			try {c = NetworkManager.getInstance().generateConnection(true);}
+			catch (ConnectionException e) {connectionExceptionHandle(e);}
+			if (c==null) return;
+			
+			special = new Special(c, type, false);
+			special.start();
+		}
+		else {
+			if (call!=null) CLI.error("In a call, cannot special");
+			if (ring!=null) CLI.error("In ring, cannot special");
+			if (special!=null) CLI.error("Already in special, cannot special");
+		}
+	}
+	
+	/**
+	 * Should only ever be called by the ConnectionRouter
+	 * @param c
+	 */
+	public void startRecievingSpecial(Connection c, Type type) {
+		if (ring==null&&call==null&&special==null) {
+			special = new Special(c, type, true);
+			special.start();
+		}
+		else {
+			c.write(new Message(Code.RequestedClientBusy));
+			if (call!=null) CLI.error("In a call, cannot special");
+			if (ring!=null) CLI.error("In ring, cannot special");
+			if (special!=null) CLI.error("Already in special, cannot special");
+		}
+	}
+	
+	/**
+	 * Called from GUI component and Special (upon recieving end code)
+	 */
+	public void endSpecial(boolean notify) {
+		if (special!=null) {
+			if (notify) {
+				special.stealConnectionHandler().write(new Message(Code.SpecialEnd));
+				GUI.getInstance().addMessage("You ended the Special", MessageBox.info);
+			}
+			else GUI.getInstance().addMessage("They ended the Special", MessageBox.info);
 		}
 		destroyAll();
 	}
@@ -156,26 +198,30 @@ public class Client {
 			call.destroy();
 			call = null;
 		}
-	}
-
-	public void startSpecial(Type type) {
-		if (special==null&&ring==null&&call==null) {
-			CLI.debug("Initiating special "+type);
-			special = new Special(type);
-			special.startSpecial();
-		}
-		else {
-			if (call!=null) CLI.error("In a call, cannot special");
-			if (ring!=null) CLI.error("In ring, cannot special");
-			if (special!=null) CLI.error("Already in special, cannot special");
-		}
-	}
-
-	public void endSpecial() {
 		if (special!=null) {
-			special.stopSpecial();
+			special.destroy();
 			special = null;
 		}
+	}
+	
+	public void connectionExceptionHandle(ConnectionException e) {
+		Color col = MessageBox.error;
+		String m = "";
+		if (e.getMessage().contains("Connection refused")) m = "Connection to "+getIP()+" refused";
+		else if (e.getMessage().contains("Cannot call self")) m = "The address "+getIP()+":"+getConnectPort()+" is in use by this computer";
+		else if (e.getMessage().contains("Destination IP is null")) {
+			m = "Please specify the IP of the other Intercom";
+			col = MessageBox.info;
+		}
+		else if (e.getMessage().contains("Destination IP is invalid")) m = "The IP "+getIP()+" is invalid";
+		else if (e.getMessage().contains("Connect Port is invalid")) m = "Connecting on port "+getConnectPort()+" is not allowed";
+		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+getIP()+":"+getConnectPort();
+		else if (e.getMessage().contains("Network is unreachable")) m = "Check your internet connection";
+		else if (e.getMessage().contains("Host is down")) m = "The host "+getIP()+" is unavailable";
+		else m = "Error making connection to "+getIP()+":"+getConnectPort();
+		
+		//Fatal errors have already been reported
+		if (!e.isFatal()) cGUI.addMessage(m, col);
 	}
 
 	public static String getIP() {return clientIP;}
@@ -207,15 +253,21 @@ public class Client {
 		shutdown = true;
 		CLI.debug("Shutting down...");
 	
+		//Deal with active things
 		if (ring!=null) {
-			Connection cH = ring.stealConectionHandler();
+			Connection cH = ring.stealConnectionHandler();
 			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
 		}
 		if (call!=null) {
-			Connection cH = call.stealConectionHandler();
+			Connection cH = call.stealConnectionHandler();
+			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+		}
+		if (special!=null) {
+			Connection cH = special.stealConnectionHandler();
 			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
 		}
 		
+		//Call other shutdowns
 		NetworkManager.getInstance().shutdown();
 		AudioManager.getInstance().release();
 		CLI.debug("Shutdown done.");

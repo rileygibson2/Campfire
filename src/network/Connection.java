@@ -3,9 +3,10 @@ package network;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.ConnectException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.net.SocketTimeoutException;
 import java.util.Arrays;
 
 import cli.CLI;
@@ -33,13 +34,15 @@ public class Connection extends Thread {
 		if (verbose) CLI.debug("Generating socket "+socket.getInetAddress().getHostAddress()+"("+socket.getLocalPort()+":"+socket.getPort()+")");
 	}
 
-	protected static Connection generate(String ip, int port, boolean verbose) throws ConnectionException {
+	protected static Connection generate(InetAddress ip, int port, boolean verbose) throws ConnectionException {
 		Connection cH = null;
 		try {
-			Socket socket = new Socket(ip, port);
+			Socket socket = new Socket();
+            socket.connect(new InetSocketAddress(ip,port), 2000);
 			cH = new Connection(socket, verbose);
 		}
-		catch (IOException e) {throw new ConnectionException("Could not create socket to "+ip+"("+port+") - "+e.getMessage(), verbose);}
+		catch (SocketTimeoutException e) {throw new ConnectionException("Could not create socket to "+ip.getHostAddress()+"("+port+") - Socket timed out", verbose);}
+		catch (IOException e) {throw new ConnectionException("Could not create socket to "+ip.getHostAddress()+"("+port+") - "+e.getMessage(), verbose);}
 		return cH;
 	}
 
@@ -141,7 +144,7 @@ public class Connection extends Thread {
 	}
 
 	public void checkSocket() throws ConnectionException {
-		if (safelyClosed) throw new ConnectionException("Socket has been closed");
+		if (safelyClosed) throw new ConnectionException("Socket has been safely closed, cannot use", false);
 		if (socket==null) throw new ConnectionException("Socket is null!");
 		if (socket.isClosed()) throw new ConnectionException("Socket is closed!");
 		if (!socket.isBound()) throw new ConnectionException("Socket is not bound!");

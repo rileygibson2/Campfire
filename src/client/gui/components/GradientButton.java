@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Rectangle;
 
 public class GradientButton extends Button {

@@ -2,7 +2,7 @@ package general;
 
 import java.awt.Cursor;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.net.URL;
 
 import javax.sound.sampled.AudioFormat;
 
@@ -20,6 +20,10 @@ public class Utils {
 	
 	public static InputStream getInputStream(String path) {
 		return Utils.class.getClassLoader().getResourceAsStream(path);
+	}
+	
+	public static URL getURL(String path) {
+		return Utils.class.getClassLoader().getResource(path);
 	}
 	
 	public static void setCursorDefault(int c) {

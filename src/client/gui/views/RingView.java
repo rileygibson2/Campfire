@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 
 import client.Client;
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import client.gui.components.Button;
 import client.gui.components.Component;
 import client.gui.components.GradientButton;

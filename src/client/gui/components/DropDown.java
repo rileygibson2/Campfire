@@ -13,7 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
+import general.Functional;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -21,10 +21,10 @@ import general.Utils;
 public class DropDown<E> extends Component {
 
 	private LinkedHashMap<String, E> options; //LinkedHashMap maintains an order
-	private Future<LinkedHashMap<String, E>> update; //Executor that can be called to update options list
 	Map.Entry<String, E> selectedItem; //The selected item and it's name
 	private Map.Entry<String, E> noneItem =new AbstractMap.SimpleEntry<>("None", null); //A default item
-	private Runnable onSelect; //Action to happen on click
+	
+	Functional<LinkedHashMap<String, E>, E> actions;
 	
 	public Label selectedLabel; //The gui selected item component
 	public ScrollBar sB;
@@ -46,9 +46,7 @@ public class DropDown<E> extends Component {
 		
 	}
 	
-	public void setSelectAction(Runnable onSelect) {this.onSelect = onSelect;}
-	
-	public void setUpdateAction(Future<LinkedHashMap<String, E>> update) {this.update = update;}
+	public void setActions(Functional<LinkedHashMap<String, E>, E> actions) {this.actions = actions;}
 	
 	public void setSelected(Map.Entry<String, E> selected) {
 		this.selectedItem = selected;
@@ -73,9 +71,8 @@ public class DropDown<E> extends Component {
 	}
 
 	private void open() {
-		if (update!=null) {
-			try {options = update.get();}
-			catch (InterruptedException | ExecutionException e) {e.printStackTrace();}
+		if (actions!=null) {
+			options = actions.get();
 			options.put("Extra1", null);
 			options.put("Extra2", null);
 			options.put("Extra3", null);
@@ -134,7 +131,7 @@ public class DropDown<E> extends Component {
 			if (i>=0&&i<options.size()) selectedItem = getOptionAt(i);
 			if (selectedItem!=null) selectedLabel.text = selectedItem.getKey();
 			
-			if (onSelect!=null) onSelect.run();
+			if (actions!=null) actions.submit(getSelected());
 		}
 
 		setSelected(false);

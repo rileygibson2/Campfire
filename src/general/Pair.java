@@ -16,6 +16,7 @@ public class Pair<A, B> {
 		return "["+a.toString()+", "+b.toString()+"]";
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {
 		if (!(o instanceof Pair)) return false;

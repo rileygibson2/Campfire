@@ -5,7 +5,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
 

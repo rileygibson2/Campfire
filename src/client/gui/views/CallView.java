@@ -7,10 +7,9 @@ import java.util.Deque;
 
 import client.Client;
 import client.gui.GUI;
-import client.gui.ScreenUtils;
+import client.gui.components.GradientButton;
 import client.gui.components.Image;
 import client.gui.components.SimpleBox;
-import client.gui.components.GradientButton;
 import general.Point;
 import general.Rectangle;
 import threads.AnimationFactory;
@@ -24,7 +23,7 @@ public class CallView extends View {
 	public Point dataBounds; //Upper and lower bound of data
 	
 	SimpleBox dataBox; //Bounding component when drawing data
-	ThreadController paintAni; //Shifts data along as time goes on
+	ThreadController paint; //Shifts data along as time goes on
 
 	public CallView() {
 		super(ViewType.Call, new Rectangle(0, 0, 100, 100));
@@ -39,7 +38,8 @@ public class CallView extends View {
 		
 		dataBox = new SimpleBox(new Rectangle(0, 10, 70, 80));
 		addComponent(dataBox);
-		paintAni = AnimationFactory.getAnimation(40, Animations.Paint);
+		paint = AnimationFactory.getAnimation(Animations.Paint);
+		paint.setWait(100);
 	}
 
 	private void initialiseData() {
@@ -70,12 +70,12 @@ public class CallView extends View {
 
 	@Override
 	public void enter() {
-		if (paintAni!=null) paintAni.start();
+		if (paint!=null) paint.start();
 	}
 
 	@Override
 	public void destroy() {
-		if (paintAni!=null&&paintAni.isRunning()) paintAni.end();
+		if (paint!=null) paint.end();
 		super.destroy();
 	}
 

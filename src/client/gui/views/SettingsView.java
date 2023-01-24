@@ -4,21 +4,23 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
+import javax.sound.sampled.Mixer.Info;
 
 import client.AudioManager;
 import client.Client;
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import client.gui.components.Button;
 import client.gui.components.DropDown;
 import client.gui.components.Image;
 import client.gui.components.Label;
 import client.gui.components.TextBox;
+import general.Functional;
 import general.Point;
 import general.Rectangle;
 
@@ -43,13 +45,16 @@ public class SettingsView extends View {
 
 		//Actions
 		audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
-		audioIn.setSelectAction(() -> AudioManager.getInstance().setMicLineInfo(audioIn.getSelected()));
-		Future<LinkedHashMap<String, Mixer.Info>> update = Client.getExecutor().submit(new Callable<LinkedHashMap<String, Mixer.Info>>() {
-			public LinkedHashMap<String, Mixer.Info> call() throws Exception {
+		audioIn.setActions(new Functional<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+			public void submit(Mixer.Info s) {
+				AudioManager.getInstance().setMicLineInfo(s);
+			}
+
+			public LinkedHashMap<String, Info> get() {
 				return AudioManager.getInstance().listMicrophones();
 			}
+			
 		});
-		audioIn.setUpdateAction(update);
 
 		//Output dropdown
 		addComponent(new Label(new Point(x, 42), "Speaker", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
@@ -59,13 +64,16 @@ public class SettingsView extends View {
 
 		//Actions
 		audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
-		audioOut.setSelectAction(() -> AudioManager.getInstance().setSpeakerLineInfo(audioOut.getSelected()));
-		update = Client.getExecutor().submit(new Callable<LinkedHashMap<String, Mixer.Info>>() {
-			public LinkedHashMap<String, Mixer.Info> call() throws Exception {
+		audioOut.setActions(new Functional<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+			public void submit(Mixer.Info s) {
+				AudioManager.getInstance().setSpeakerLineInfo(s);
+			}
+
+			public LinkedHashMap<String, Info> get() {
 				return AudioManager.getInstance().listSpeakers();
 			}
+			
 		});
-		audioOut.setUpdateAction(update);
 
 		//Remote dropdown
 		addComponent(new Label(new Point(x, 72), "Remote", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
@@ -76,7 +84,7 @@ public class SettingsView extends View {
 		//Port textbox
 		x = 55;
 		addComponent(new Label(new Point(x, 12), "Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		addComponent(new TextBox(new Rectangle(x, 18, 40, 15), "", Client.ipRegex));
+		addComponent(new TextBox(new Rectangle(x, 18, 40, 15), ""+Client.getConnectPort()));
 
 		//Exit button
 		Button b = new Button(new Rectangle(92, 4, 6, 12), new Color(100, 100, 100));

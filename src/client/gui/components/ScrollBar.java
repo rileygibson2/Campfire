@@ -9,7 +9,6 @@ import java.util.List;
 
 import cli.CLI;
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
 

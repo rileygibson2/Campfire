@@ -5,7 +5,6 @@ import java.awt.Cursor;
 import java.awt.Graphics2D;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -16,8 +15,8 @@ import threads.ThreadController;
 public class Button extends Component {
 
 	public Color col;
-	public ThreadController hoverAni;
-	public ThreadController unHoverAni;
+	public ThreadController hover;
+	public ThreadController unHover;
 	public boolean drawBox;
 
 	public Button(Rectangle r, Color col) {
@@ -37,9 +36,9 @@ public class Button extends Component {
 	public void doHover() {
 		if (isHoverPaused()) return;
 		if (!isHovered()) {
-			if (unHoverAni!=null) unHoverAni.end();
-			hoverAni = AnimationFactory.getAnimation(this, Animations.Transform, new Rectangle(r.x-(r.width*0.1), r.y-(r.height*0.1), r.width*1.2, r.height*1.2), 15);
-			hoverAni.start();
+			if (unHover!=null) unHover.end();
+			hover = AnimationFactory.getAnimation(this, Animations.Transform, new Rectangle(r.x-(r.width*0.1), r.y-(r.height*0.1), r.width*1.2, r.height*1.2), 15);
+			hover.start();
 			Utils.setCursorDefault(Cursor.HAND_CURSOR);
 		}
 		super.doHover();
@@ -49,9 +48,9 @@ public class Button extends Component {
 	public void doUnhover() {
 		if (isHoverPaused()) return;
 		if (isHovered()) {
-			if (hoverAni!=null) hoverAni.end();
-			unHoverAni = AnimationFactory.getAnimation(this, Animations.Transform, getOriginalRec().clone(), 15);
-			unHoverAni.start();
+			if (hover!=null) hover.end();
+			unHover = AnimationFactory.getAnimation(this, Animations.Transform, getOriginalRec().clone(), 15);
+			unHover.start();
 			Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
 		}
 		super.doUnhover();
@@ -59,8 +58,8 @@ public class Button extends Component {
 
 	@Override
 	public void destroy() {
-		if (hoverAni!=null) hoverAni.end();
-		if (unHoverAni!=null) unHoverAni.end();
+		if (hover!=null) hover.end();
+		if (unHover!=null) unHover.end();
 		super.destroy();
 	}
 

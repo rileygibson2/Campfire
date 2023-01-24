@@ -16,10 +16,12 @@ public class Ring {
 	private ThreadController audio;
 	private ThreadController writer;
 	boolean recieving;
+	boolean ended; //Used to avoid errors from threads still executing after call has ended
 
 	public Ring(Connection c, boolean recieving) {
 		this.recieving = recieving;
 		this.c = c;
+		ended = false;
 		c.setOnUpdate(() -> handleData());
 	}
 
@@ -30,7 +32,7 @@ public class Ring {
 	 * 
 	 * @return
 	 */
-	public Connection stealConectionHandler() {
+	public Connection stealConnectionHandler() {
 		Connection c = this.c;
 		this.c = null;
 		return c;
@@ -53,8 +55,7 @@ public class Ring {
 				@Override
 				public void run() {
 					while (isRunning()) {
-						CLI.debug("Writing call request");
-						c.write(m.formatBytes());
+						c.write(m);
 						iterate();
 					}
 					finish();
@@ -75,6 +76,10 @@ public class Ring {
 	 * Triggered by client
 	 */
 	public void accept() {
+		if (c==null) {
+			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			return;
+		}
 		c.write(new Message(Code.CallAccept));
 	}
 
@@ -106,7 +111,7 @@ public class Ring {
 
 	public void handleData() {
 		if (c==null) {
-			if (!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 
@@ -172,6 +177,7 @@ public class Ring {
 	}
 
 	public void destroy() {
+		ended = true;
 		if (audio!=null) audio.end();
 		if (writer!=null) writer.end();
 		if (c!=null) c.close();

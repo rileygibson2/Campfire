@@ -3,7 +3,6 @@ package client.gui.components;
 import java.awt.Graphics2D;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Rectangle;
 
 public class Image extends Component {

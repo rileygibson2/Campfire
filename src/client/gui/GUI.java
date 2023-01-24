@@ -16,7 +16,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import cli.CLI;
 import client.Client;
 import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
@@ -74,9 +73,9 @@ public class GUI extends JPanel {
 	
 	public void removeMessage(MessageBox m) {messages.remove(m);}
 	
-	public View getView() {return view;}
-	
 	public ScreenUtils getScreenUtils() {return screenUtils;}
+	
+	public View getView() {return view;}
 	
 	public void changeView(View v) { 
 		if (v==null) return;

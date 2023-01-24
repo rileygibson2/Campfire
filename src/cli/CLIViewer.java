@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseWheelEvent;
@@ -16,7 +15,6 @@ import java.util.Deque;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import client.gui.IO;
 import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;

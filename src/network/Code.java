@@ -24,6 +24,15 @@ public enum Code {
 	CallEnd("cE"),
 	CallEndAck("cE-ACK"),
 	
+	SpecialRequest("sR"),
+	SpecialRequestAck("sR-ACK"),
+	
+	SpecialEnd("sE"),
+	SpecialEndAck("sE-ACK"),
+	
+	InvalidSpecialType("sTI"),
+	InvalidSpecialTypeAck("sTI-ACK"),
+	
 	RequestedClientBusy("cRB"),
 	RequestedClientBusyAck("cRB-ACK"),
 	
