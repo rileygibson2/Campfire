@@ -18,7 +18,7 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.SourceDataLine;
 import javax.sound.sampled.TargetDataLine;
 
-import general.CLI;
+import cli.CLI;
 import general.Utils;
 import threads.ThreadController;
 
@@ -201,10 +201,10 @@ public class AudioManager {
 			return speakerLine;
 		}
 		catch (LineUnavailableException | InterruptedException e) {CLI.error("Error getting speaker writer - "+e.getMessage());}
-		
+
 		return null;
 	}
-	
+
 	public void releaseSpeakerWriter() {
 		speakerLock.release();
 		if (speakerLine!=null) {
@@ -219,7 +219,7 @@ public class AudioManager {
 			public void run() {
 				try {
 					micLock.acquire();
-					
+
 					if (micLineInfo==null) {
 						CLI.error("Mic Line Info is null");
 						return;
@@ -231,7 +231,7 @@ public class AudioManager {
 					// Capture audio data and save it to the file
 					while (isRunning()) {
 						if (micLine==null) {
-							CLI.error("Mic became null while running");
+							if (!Client.isShuttingdown()) CLI.error("Mic became null while running");
 							break;
 						}
 						int bytesRead = micLine.read(buffer, 0, buffer.length);
@@ -244,8 +244,8 @@ public class AudioManager {
 						micLine = null;
 					}
 				}
-				catch (Exception e) {CLI.error("Error reading microphone - "+e.getMessage());}
-				
+				catch (Exception e) {if (!Client.isShuttingdown()) CLI.error("Error reading microphone - "+e.getMessage());}
+
 				micLock.release();
 			}
 		};
@@ -257,36 +257,34 @@ public class AudioManager {
 			public void run() {
 				try {
 					speakerLock.acquire();
-					
+
 					if (speakerLineInfo==null) throw new Error("Speaker Line Info is null");
 					speakerLine = getSourceLine(speakerLineInfo);
 					speakerLine.open(format);
 					speakerLine.start(); // Start writing audio data to the speakers
 					applyVolume(speakerLine);
 
-					// Open the wav file
-					InputStream in = Utils.getInputStream("audio/"+fileName); 
-					InputStream bufferedIn = new BufferedInputStream(in);
-					AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
-
-					AudioFormat baseFormat = audioStream.getFormat();
-					AudioFormat doubleSpeedFormat = new AudioFormat(
-							baseFormat.getEncoding(),
-							(int) (baseFormat.getSampleRate()*0.9), // double the sample rate
-							baseFormat.getSampleSizeInBits(),
-							baseFormat.getChannels(),
-							baseFormat.getFrameSize(),
-							(int) (baseFormat.getFrameRate()*0.9), // double the frame rate
-							baseFormat.isBigEndian());
-					audioStream = AudioSystem.getAudioInputStream(doubleSpeedFormat, audioStream);
-
-					audioStream.mark(Integer.MAX_VALUE);
-
 					boolean initialPlay = true;
 
 					while (isRunning()&&(initialPlay||loop)) {
 						if (initialPlay) initialPlay = false;
-						else audioStream.reset();
+						
+						// Open the wav file
+						InputStream in = Utils.getInputStream("audio/"+fileName); 
+						InputStream bufferedIn = new BufferedInputStream(in);
+						AudioInputStream audioStream = AudioSystem.getAudioInputStream(bufferedIn);
+
+						AudioFormat baseFormat = audioStream.getFormat();
+						AudioFormat doubleSpeedFormat = new AudioFormat(
+								baseFormat.getEncoding(),
+								(int) (baseFormat.getSampleRate()*0.9), // double the sample rate
+								baseFormat.getSampleSizeInBits(),
+								baseFormat.getChannels(),
+								baseFormat.getFrameSize(),
+								(int) (baseFormat.getFrameRate()*0.9), // double the frame rate
+								baseFormat.isBigEndian());
+						audioStream = AudioSystem.getAudioInputStream(doubleSpeedFormat, audioStream);
+						audioStream.mark(Integer.MAX_VALUE);
 
 						// Read the file and play it
 						int bytesRead = 0;
@@ -294,22 +292,22 @@ public class AudioManager {
 
 						while (bytesRead != -1 && isRunning()) {
 							if (speakerLine==null) {
-								CLI.error("Speakerline became null while playing file");
+								if (!Client.isShuttingdown()) CLI.error("Speakerline became null while playing file");
 								break;
 							}
 							bytesRead = audioStream.read(buffer, 0, buffer.length);
 							if (bytesRead >= 0) speakerLine.write(buffer, 0, bytesRead);
 						}
+						audioStream.close();
 					}
 
-					audioStream.close();
 					if (speakerLine!=null) {
 						speakerLine.drain();
 						speakerLine.close();
 					}
 				}
-				catch (Exception e) {CLI.error("Error playing sound - "+e.getMessage());}
-				
+				catch (Exception e) {if (!Client.isShuttingdown()) CLI.error("Error playing sound - "+e.getMessage());}
+
 				speakerLock.release();
 			}
 		};

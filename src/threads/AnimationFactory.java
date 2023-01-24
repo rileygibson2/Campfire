@@ -8,9 +8,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import cli.CLI;
 import client.gui.components.Component;
 import client.gui.components.TextBox;
-import general.CLI;
 import general.Pair;
 import general.Point;
 import general.Rectangle;

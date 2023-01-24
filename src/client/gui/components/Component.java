@@ -1,7 +1,7 @@
 package client.gui.components;
 
+import cli.CLI;
 import client.gui.Element;
-import general.CLI;
 import general.Point;
 import general.Rectangle;
 
@@ -68,6 +68,10 @@ public abstract class Component extends Element {
 
 	public void setVisible(boolean v) {visible = v;}
 	public boolean isVisible() {return visible;}
+	
+	public void removeFromParent() {
+		if (getParent()!=null) getParent().removeComponent(this);
+	}
 
 	@Override
 	public void doClick(Point p) {

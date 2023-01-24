@@ -3,6 +3,7 @@ package client.gui.views;
 import java.awt.Color;
 import java.awt.Font;
 
+import cli.CLI;
 import client.AudioManager;
 import client.Client;
 import client.Special.Type;
@@ -14,9 +15,9 @@ import client.gui.components.PopUp;
 import client.gui.components.SimpleBox;
 import client.gui.components.Slider;
 import client.gui.components.TextBox;
-import general.CLI;
 import general.Point;
 import general.Rectangle;
+import network.NetworkManager;
 
 public class HomeView extends View {
 
@@ -24,6 +25,7 @@ public class HomeView extends View {
 	
 	SimpleBox extrasPopup;
 	Slider volumeSlider;
+	public Image conImage;
 
 	private HomeView() {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
@@ -62,10 +64,24 @@ public class HomeView extends View {
 		//Connection
 		final Button con = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
 		sB.addComponent(con);
-		con.setClickAction(() -> {});
+		con.setClickAction(() -> {
+			String c = "Currently disconnected";
+			if (NetworkManager.getInstance().isProbablyConnected()) c = "Currently connected";
+			
+			PopUp p = new PopUp("Intercom Status", new Point(50, 50));
+			Label l = new Label(new Point(50, 50), c, new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230));
+			l.setCentered(true);
+			p.addPopUpComponent(l);
+			p.increasePriority();
+			addComponent(p);
+		});
 		con.setHoverAction(() -> adjustColorHover(con, true));
 		con.setUnHoverAction(() -> adjustColorHover(con, false));
-		con.addComponent(new Image(new Rectangle(30, 30, 40, 40), "bars.png"));
+		
+		String src = "disconnected.png";
+		if (NetworkManager.getInstance().isProbablyConnected()) src = "connected.png";
+		conImage = new Image(new Rectangle(23, 20, 50, 55), src);
+		con.addComponent(conImage);
 
 		//Mute
 		y -= 20;
@@ -131,11 +147,11 @@ public class HomeView extends View {
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
-			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getInstance().getIP(), Client.ipRegex);
+			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP(), Client.ipRegex);
 			p.addPopUpComponent(t);
 			p.increasePriority();
 			p.setCloseAction(() -> {
-				Client.getInstance().setIP(t.getText());
+				Client.setIP(t.getText());
 			});
 			addComponent(p);
 		});

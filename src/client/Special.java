@@ -34,7 +34,7 @@ public class Special {
 		case PinaColada: path = "escape.wav"; break;
 		case Smoko: path = "smoko.wav"; break;
 		}
-		audio = AudioManager.getInstance().getSoundWriter(path, true);
+		audio = AudioManager.getInstance().getSoundWriter(path, false);
 		audio.start();
 	}
 	

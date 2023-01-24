@@ -1,11 +1,14 @@
 package client.gui;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -13,7 +16,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import cli.CLI;
 import client.Client;
+import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
 import client.gui.views.View;
 import dom.DOM;
@@ -30,6 +35,7 @@ public class GUI extends JPanel {
 	private ScreenUtils screenUtils;
 	private IO io;
 	private View view;
+	private List<MessageBox> messages;
 	
 	DOM dom;
 
@@ -37,6 +43,7 @@ public class GUI extends JPanel {
 		io = IO.getInstance();
 		dom = new DOM();
 		screenUtils = new ScreenUtils(screen);
+		messages = new ArrayList<MessageBox>();
 		
 		setFocusable(true);
 		setFocusTraversalKeysEnabled(false);
@@ -53,6 +60,19 @@ public class GUI extends JPanel {
 		if (singleton==null) singleton = new GUI();
 		return singleton;
 	}
+	
+	public void addMessage(String message, Color col) {
+		//Find y position message should animate to
+		double goalY = messages.size()*12+5;
+		int hold = 2000;
+		if (col.equals(MessageBox.error)) hold = 4000;
+		
+		MessageBox m = new MessageBox(message, col, goalY, hold);
+		messages.add(m);
+		HomeView.getInstance().addComponent(m);
+	}
+	
+	public void removeMessage(MessageBox m) {messages.remove(m);}
 	
 	public View getView() {return view;}
 	
@@ -99,6 +119,8 @@ public class GUI extends JPanel {
 	public void paintComponent(Graphics g) {
 		screenUtils.drawBase((Graphics2D) g);
 		view.draw((Graphics2D) g);
+		
+		if (dom.visualiserVisible()) dom.update(getView());
 	}
 
 	public static GUI initialise(Client c) {

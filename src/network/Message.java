@@ -1,6 +1,6 @@
 package network;
 
-import general.CLI;
+import cli.CLI;
 import general.Utils;
 
 public class Message {

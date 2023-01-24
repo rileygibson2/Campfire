@@ -3,11 +3,13 @@ package client;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import cli.CLI;
 import client.Special.Type;
 import client.gui.GUI;
-import general.CLI;
+import client.gui.components.MessageBox;
 import network.Code;
-import network.ConnectionHandler;
+import network.Connection;
+import network.ConnectionException;
 import network.Message;
 import network.NetworkManager;
 
@@ -21,7 +23,7 @@ public class Client {
 	Special special;
 
 	public static final String ipRegex = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$";
-	private String clientIP;
+	private static String clientIP;
 	private static int listenPort;
 	private static int connectPort;
 	private static boolean shutdown;
@@ -35,18 +37,23 @@ public class Client {
 		if (singleton==null) singleton = new Client();
 		return singleton;
 	}
+	
+	public boolean isCommunicating() {
+		if (ring!=null||call!=null||special!=null) return true;
+		return false;
+	}
 
 	/**
 	 * Should only ever be called by the NetworkManager
 	 * @param cH
 	 */
-	public void startRecievingRing(ConnectionHandler cH) {
+	public void startRecievingRing(Connection c) {
 		if (ring==null&&call==null&&special==null) {
-			ring = new Ring(cH, true);
+			ring = new Ring(c, true);
 			ring.start();
 		}
 		else {
-			cH.write(new Message(Code.RequestedClientBusy));
+			c.write(new Message(Code.RequestedClientBusy));
 			
 			if (call!=null) CLI.error("In a call, cannot ring");
 			if (special!=null) CLI.error("In special, cannot ring");
@@ -59,8 +66,20 @@ public class Client {
 	 */
 	public void startInitiatingRing() {
 		if (ring==null&&call==null&&special==null) {
-			ConnectionHandler cH = NetworkManager.getInstance().generateConnectionHandler();
-			ring = new Ring(cH, false);
+			Connection c = null;
+			try {c = NetworkManager.getInstance().generateConnection(true);}
+			catch (ConnectionException e) {
+				String m = "";
+				if (e.getMessage().contains("Connection refused")) m = "Connection refused";
+				else m = "Error making connection";
+				
+				//Fatal errors have already been reported
+				if (!e.isFatal()) cGUI.addMessage(m, MessageBox.error);
+			}
+			
+			if (c==null) return;
+			
+			ring = new Ring(c, false);
 			ring.start();
 		}
 		else {
@@ -79,27 +98,19 @@ public class Client {
 	}
 
 	/**
-	 * Called by GUI components
-	 * Should only be used by initiating client to cancel a ring
+	 * Called by GUI components and Ring (upon recieving cancel code)
 	 */
 	public void cancelRing() {
-		if (ring!=null) {
-			ring.cancel();
-			ring.destroy();
-			ring = null;
-		}
+		if (ring!=null) ring.cancel();
+		destroyAll();
 	}
 
 	/**
-	 * Called by GUI components
-	 * Should only be used by recieving client to decline a ring
+	 * Called by GUI components and Ring (upon recieving decline code)
 	 */
 	public void declineRing() {
-		if (ring!=null) {
-			ring.decline();
-			ring.destroy();
-			ring = null;
-		}
+		if (ring!=null) ring.decline();
+		destroyAll();
 	}
 	
 	/**
@@ -108,23 +119,40 @@ public class Client {
 	protected void startCall() {
 		if (call==null) {
 			endSpecial(); //Deal with this
-			ConnectionHandler cH = ring.getConnectionHandler(); //Steal from ring
+			Connection c = ring.stealConectionHandler(); //Steal from ring
 			ring.destroy();
 			ring = null;
 
-			call = new Call(cH);
+			if (c==null) {
+				cGUI.addMessage("Problem initiating call", MessageBox.error);
+				return;
+			}
+			call = new Call(c);
 			call.start();
 		}
 		else if (call!=null) CLI.error("Already in call, cannot start call");
-		//cP.print(Utils.format(Code.CallRequest, name));
 	}
 
 	/**
-	 * Called from GUI component
+	 * Called from GUI component and Call (upon recieving end code)
 	 */
 	public void endCall(boolean notify) {
 		if (call!=null) {
-			if (notify) call.getConnectionHandler().write(new Message(Code.CallEnd));
+			if (notify) {
+				call.stealConectionHandler().write(new Message(Code.CallEnd));
+				GUI.getInstance().addMessage("You ended the call", MessageBox.info);
+			}
+			else GUI.getInstance().addMessage("They ended the call", MessageBox.info);
+		}
+		destroyAll();
+	}
+	
+	public void destroyAll() {
+		if (ring!=null) {
+			ring.destroy();
+			ring = null;
+		}
+		if (call!=null) {
 			call.destroy();
 			call = null;
 		}
@@ -150,9 +178,9 @@ public class Client {
 		}
 	}
 
-	public String getIP() {return clientIP;}
+	public static String getIP() {return clientIP;}
 
-	public void setIP(String ip) {
+	public static void setIP(String ip) {
 		if (ip.matches(ipRegex)) {
 			clientIP = ip;
 			CLI.debug("IP set as: "+clientIP);
@@ -178,6 +206,16 @@ public class Client {
 	public void shutdown() {
 		shutdown = true;
 		CLI.debug("Shutting down...");
+	
+		if (ring!=null) {
+			Connection cH = ring.stealConectionHandler();
+			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+		}
+		if (call!=null) {
+			Connection cH = call.stealConectionHandler();
+			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+		}
+		
 		NetworkManager.getInstance().shutdown();
 		AudioManager.getInstance().release();
 		CLI.debug("Shutdown done.");

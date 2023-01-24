@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
 
+import cli.CLI;
+import client.Client;
 import client.gui.components.Button;
 import client.gui.components.Component;
 import client.gui.components.DropDown;
@@ -29,7 +31,6 @@ import client.gui.components.Label;
 import client.gui.components.SimpleBox;
 import client.gui.components.TextBox;
 import client.gui.views.CallView;
-import general.CLI;
 import general.Pair;
 import general.Point;
 import general.Rectangle;
@@ -52,10 +53,9 @@ public class ScreenUtils {
 
 	public void drawLabel(Graphics2D g, Label l) {
 		Rectangle r = l.getRealRec();
-		
 		Color col = new Color(l.col.getRed(), l.col.getGreen(), l.col.getBlue(), percToCol(l.getOpacity()));
 		g.setFont(l.font);
-		//g.drawString(l.text, cW(r.x), cH(r.y));
+		
 		if (l.isCentered()) drawCenteredString(g, l.font, l.text, col, new Rectangle(r.x, r.y, 1, 1));
 		else drawStringFromPoint(g, l.font, l.text, col, new Point(r.x, r.y));
 	}
@@ -84,7 +84,7 @@ public class ScreenUtils {
 		BufferedImage img = null;
 		try {img = ImageIO.read(Utils.getInputStream("assets/"+i.src));}
 		catch (IOException e) {
-			CLI.error("ImageIO failed for assets/"+i.src);
+			if (!Client.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
 			return;
 		}
 		

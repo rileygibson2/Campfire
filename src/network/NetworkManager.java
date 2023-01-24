@@ -1,6 +1,7 @@
 package network;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,64 +9,135 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
+import cli.CLI;
 import client.Client;
-import general.CLI;
+import client.gui.GUI;
+import client.gui.components.MessageBox;
+import client.gui.views.HomeView;
+import threads.ThreadController;
 
 public class NetworkManager extends Thread {
 
 	private static NetworkManager singleton;
-	
-	private ServerSocket serverSocket;
-	Set<ConnectionHandler> handlers;
 
-	private NetworkManager() {
-		handlers = new HashSet<ConnectionHandler>();
-	}
+	private ServerSocket serverSocket;
+	Set<Connection> connections;
+	ThreadController connectionChecker;
+
+	private boolean isProbablyConnected; //Tentative based on pings every so often
+	private boolean fatalError; //Set when a fatal error occurs and no further operations should take place
 	
+	private NetworkManager() {
+		connections = new HashSet<Connection>();
+		isProbablyConnected = false;
+		fatalError = false;
+	}
+
 	public static NetworkManager getInstance() {
 		if (singleton==null) singleton = new NetworkManager();
 		return singleton;
 	}
 
+	public void removeConnection(Connection c) {connections.remove(c);}
+
 	@Override
 	public void run() {
+		try {checkFatalError();}
+		catch (ConnectionException e) {return;}
+		
+		//startConnectionChecker();
+		
 		try {
 			Client.getInstance();
 			serverSocket = new ServerSocket(Client.getListenPort());
 			//serverSocket = new ServerSocket(5000);
 			while (true) {
 				if (serverSocket==null||serverSocket.isClosed()) {
-					CLI.error("Server socket became null - ");
+					CLI.error("Server socket became null");
+					setFatalError();
 					return;
 				}
-				
+
 				Socket clientSocket = serverSocket.accept();
-				ConnectionHandler cH = new ConnectionHandler(clientSocket);
-				handlers.add(cH);
-				
+				Connection c = new Connection(clientSocket, false);
+				connections.add(c);
+
 				//Route to correct place
-				Client.getInstance().startRecievingRing(cH);
+				new ConnectionRouter(c);
 			}
 		}
 		catch (IOException e) {
+			CLI.debug("C: "+e.getClass());
 			if (!Client.isShuttingdown()) CLI.error("Problem with server socket - "+e.getMessage());
+			if (e.getClass()==BindException.class) GUI.getInstance().addMessage("Something else is using the local port "+Client.getListenPort(), MessageBox.error);
+			setFatalError();
+		}
+	}
+
+	public Connection generateConnection(boolean verbose) throws ConnectionException {
+		checkFatalError();
+		
+		InetAddress localAddress = null;
+		try {localAddress = InetAddress.getLocalHost();} 
+		catch (UnknownHostException e) {CLI.error("Problem getting local address - "+e.getMessage());}
+
+		String ip = Client.getIP();
+		int port = Client.getConnectPort();
+		if (ip==null) throw new ConnectionException("Destination IP is null");
+		if (port==0) throw new ConnectionException("Destination Port is null");
+
+		//Check not calling self
+		if (ip.equals(localAddress.getHostAddress())&&port==Client.getListenPort()) throw new ConnectionException("Cannot call self");
+
+		Connection c = Connection.generate(ip, Client.getConnectPort(), verbose);
+		if (c!=null) connections.add(c);
+		return c;
+	}
+
+	public void startConnectionChecker() {
+		ThreadController connectionChecker = new ThreadController(){
+			@Override
+			public void run() {
+				while (isRunning()) {
+					try {checkFatalError();}
+					catch (ConnectionException e) {return;}
+					
+					if (!Client.getInstance().isCommunicating()) {
+						try {
+							Connection c = generateConnection(false);
+							c.close();
+							isProbablyConnected = true;
+							HomeView.getInstance().conImage.src = "connected.png";
+						} catch (ConnectionException e) {
+							isProbablyConnected = false;
+							HomeView.getInstance().conImage.src = "disconnected.png";
+						}
+					}
+					iterate();
+				}
+			}
+		};
+		connectionChecker.setWait(5000);
+		connectionChecker.start();
+	}
+
+	public void setFatalError() {
+		fatalError = true;
+		shutdown();
+	}
+	
+	public void checkFatalError() throws ConnectionException {
+		if (fatalError) {
+			GUI.getInstance().addMessage("Fatal Error - Please restart application", MessageBox.error);
+			throw new ConnectionException("A fatal error was previously detected, cannot continue").setFatal();
 		}
 	}
 	
-	public ConnectionHandler generateConnectionHandler() {
-		//ConnectionHandler cH = new ConnectionHandler(Client.getInstance().getIP(), Client.getInstance().getPort());
-		
-		InetAddress address = null;
-		try {address = InetAddress.getLocalHost();} 
-		catch (UnknownHostException e) {CLI.error("Problem getting local address - "+e.getMessage());}
-		
-		ConnectionHandler cH = new ConnectionHandler(address, Client.getConnectPort());
-		handlers.add(cH);
-		return cH;
-	}
+	public boolean isProbablyConnected() {return isProbablyConnected;}
 
 	public void shutdown() {
-		for (ConnectionHandler c : handlers) c.close();
+		if (connectionChecker!=null) connectionChecker.end();
+		for (Connection c : connections) c.close();
 		try {
 			if (serverSocket!=null) serverSocket.close();
 		}

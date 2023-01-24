@@ -2,7 +2,7 @@ package threads;
 
 import java.util.concurrent.Callable;
 
-import general.CLI;
+import cli.CLI;
 
 public class SpinWait {
 

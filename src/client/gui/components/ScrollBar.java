@@ -7,9 +7,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import cli.CLI;
 import client.gui.GUI;
 import client.gui.ScreenUtils;
-import general.CLI;
 import general.Point;
 import general.Rectangle;
 

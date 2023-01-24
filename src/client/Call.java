@@ -2,31 +2,44 @@ package client;
 
 import javax.sound.sampled.SourceDataLine;
 
+import cli.CLI;
+import client.gui.GUI;
+import client.gui.components.MessageBox;
 import client.gui.views.CallView;
 import client.gui.views.HomeView;
-import general.CLI;
 import general.Utils;
 import network.Code;
-import network.ConnectionHandler;
+import network.Connection;
 import network.Message;
 import threads.ThreadController;
 
 public class Call {
 
-	private ConnectionHandler cH;
+	private Connection c;
 	CallView cV;
 	ThreadController audio;
 	SourceDataLine speakerLine;
 
 	byte[] data;
 
-	public Call(ConnectionHandler cH) {
-		this.cH = cH;
-		cH.setOnUpdate(() -> handleData());
+	public Call(Connection c) {
+		this.c = c;
+		c.setOnUpdate(() -> handleData());
 		data = new byte[AudioManager.blockLength];
 	}
 
-	public ConnectionHandler getConnectionHandler() {return cH;}
+	/**
+	 * Can only be used to obtain a connection handler once,
+	 * as will set this objects version to null to prevent and duplicate use.
+	 * Whoever uses this method now has the  responsibility to close the object they obtain.
+	 * 
+	 * @return
+	 */
+	public Connection stealConectionHandler() {
+		Connection c = this.c;
+		this.c = null;
+		return c;
+	}
 
 	public void start() {
 		//Deal with GUI
@@ -34,7 +47,7 @@ public class Call {
 		Client.cGUI.changeView(cV);
 
 		//Check connection is listening
-		if (!cH.isListening()) cH.start();
+		if (!c.isListening()) c.start();
 
 		//Get speaker components
 		speakerLine = AudioManager.getInstance().getSpeakerWriter();
@@ -48,14 +61,18 @@ public class Call {
 	 * Handles data coming in from the AudioManager
 	 */
 	public void handleMicData() {
-		cH.write(data);
+		c.write(data);
 	}
 
 	/**
 	 * Handles data coming in from the ConnectionHandler
 	 */
 	public void handleData() {
-		byte[] data = cH.getData();
+		if (c==null) {
+			if (!Client.isShuttingdown()) CLI.error("Ring unexpectedly became null");
+			return;
+		}
+		byte[] data = c.getData();
 
 		//Check for codes
 		Message m = Message.decode(data);
@@ -63,13 +80,20 @@ public class Call {
 			CLI.debug("Recieved: "+m.toString());
 			switch (m.getCode()) {
 			case CallEnd:
-				cH.write(new Message(Code.CallEndAck));
+				c.write(new Message(Code.CallEndAck));
 				Client.getInstance().endCall(false);
 				return;
+				
 			case CallError:
-				cH.write(new Message(Code.CallErrorAck));
-				Client.getInstance().endCall(false);
+				c.write(new Message(Code.CallErrorAck));
+				Client.getInstance().destroyAll(); //Reset client
+				GUI.getInstance().addMessage("There was an error with the ring", MessageBox.error);
 				return;
+				
+			case Ping:
+				c.write(new Message(Code.PingAck));
+				break;
+				
 			default:
 				break;
 			}
@@ -87,6 +111,7 @@ public class Call {
 
 	public void destroy() {
 		if (audio!=null) audio.end();
+		if (c!=null) c.close();
 		AudioManager.getInstance().releaseSpeakerWriter();
 		Client.cGUI.changeView(HomeView.getInstance());
 	}

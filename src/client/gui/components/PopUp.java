@@ -55,7 +55,7 @@ public class PopUp extends Component {
 
 	private void close(boolean cancelled) {
 		if (onClose!=null) onClose.run();
-		getParent().removeComponent(this);
+		removeFromParent();
 		destroy();
 	}
 }

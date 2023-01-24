@@ -73,11 +73,16 @@ public class ThreadController extends Thread {
 	public void iterate() {
 		i++;
 		if (iteratePaint) Client.cGUI.repaint();
-		try {Thread.sleep(wait);}
-		catch (InterruptedException e) {e.printStackTrace();}
+		sleep(wait);
 	}
 
 	public void finish() {
 		if (finishAction!=null) finishAction.run();
+		Client.cGUI.repaint();
+	}
+	
+	public void sleep(int wait) {
+		try {Thread.sleep(wait);}
+		catch (InterruptedException e) {e.printStackTrace();}
 	}
 }

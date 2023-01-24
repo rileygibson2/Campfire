@@ -5,6 +5,8 @@ public enum Code {
 	WhoIs("i1"),
 	IAm("i2"),
 	ClientsList("i3"),
+	Ping("pp"),
+	PingAck("pp-ACK"),
 
 	//Calls
 	CallRequest("cR"),

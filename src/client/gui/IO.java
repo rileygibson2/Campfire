@@ -10,6 +10,7 @@ import java.awt.event.MouseWheelListener;
 import java.util.HashSet;
 import java.util.Set;
 
+import cli.CLI;
 import client.Client;
 import client.gui.components.Component;
 import general.Point;
@@ -41,7 +42,6 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 	
 	public void finishEvent() {
 		GUI.getInstance().repaint();
-		if (GUI.getInstance().dom.visualiserVisible()) GUI.getInstance().dom.update(GUI.getInstance().getView());
 	}
 	
 	@Override
@@ -84,6 +84,10 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 			Client.getInstance().endRing();
 		}*/
 		
+		if (e.getExtendedKeyCode()==KeyEvent.VK_C) {
+			if (CLI.viewerActive()) CLI.showViewer(false);
+			else CLI.showViewer(true);
+		}
 		if (e.getExtendedKeyCode()==KeyEvent.VK_D) {
 			boolean show = true;
 			if (GUI.getInstance().dom.visualiserVisible()) show = false;
