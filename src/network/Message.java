@@ -29,6 +29,7 @@ public class Message {
 	}
 	
 	public Code getCode() {return code;}
+	
 	public String getData() {return data;}
 
 	public String format() {

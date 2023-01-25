@@ -27,7 +27,7 @@ public class Button extends Component {
 
 	@Override
 	public void doClick(Point p) {
-		Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+		Utils.setCursor(Cursor.DEFAULT_CURSOR);
 		super.doClick(p);
 	};
 
@@ -39,7 +39,7 @@ public class Button extends Component {
 			if (unHover!=null) unHover.end();
 			hover = AnimationFactory.getAnimation(this, Animations.Transform, new Rectangle(r.x-(r.width*0.1), r.y-(r.height*0.1), r.width*1.2, r.height*1.2), 15);
 			hover.start();
-			Utils.setCursorDefault(Cursor.HAND_CURSOR);
+			Utils.setCursor(Cursor.HAND_CURSOR);
 		}
 		super.doHover();
 	}
@@ -51,7 +51,7 @@ public class Button extends Component {
 			if (hover!=null) hover.end();
 			unHover = AnimationFactory.getAnimation(this, Animations.Transform, getOriginalRec().clone(), 15);
 			unHover.start();
-			Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+			Utils.setCursor(Cursor.DEFAULT_CURSOR);
 		}
 		super.doUnhover();
 	}

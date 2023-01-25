@@ -16,6 +16,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import cli.CLI;
 import client.Client;
 import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
@@ -118,7 +119,6 @@ public class GUI extends JPanel {
 	public void paintComponent(Graphics g) {
 		screenUtils.drawBase((Graphics2D) g);
 		view.draw((Graphics2D) g);
-		
 		if (dom.visualiserVisible()) dom.update(getView());
 	}
 

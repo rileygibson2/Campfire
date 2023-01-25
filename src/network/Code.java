@@ -36,8 +36,8 @@ public enum Code {
 	RequestedClientBusy("cRB"),
 	RequestedClientBusyAck("cRB-ACK"),
 	
-	CallError("cER"),
-	CallErrorAck("cER-ACK");
+	LocalError("cER"),
+	LocalErrorAck("cER-ACK");
 
 	public final String c;
 	private Code(String c) {

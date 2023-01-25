@@ -3,16 +3,13 @@ package client.gui.components;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.util.AbstractMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
-import client.gui.GUI;
+import cli.CLI;
 import general.Functional;
 import general.Point;
 import general.Rectangle;
@@ -26,6 +23,7 @@ public class DropDown<E> extends Component {
 	
 	Functional<LinkedHashMap<String, E>, E> actions;
 	
+	private SimpleBox topBox;
 	public Label selectedLabel; //The gui selected item component
 	public ScrollBar sB;
 
@@ -34,9 +32,14 @@ public class DropDown<E> extends Component {
 		options = new LinkedHashMap<String, E>();
 		selectedItem = noneItem;
 		
-		//Make top selected label
+		//Top box
+		topBox = new SimpleBox(new Rectangle(0, 0, 100, 100), new Color(80, 80, 80));
+		topBox.setRounded(true);
+		addComponent(topBox);
+		
+		//Selected label
 		selectedLabel = new Label(new Point(5, 50), selectedItem.getKey(), new Font("Geneva", Font.ITALIC, 12), new Color(200, 200, 200)); 
-		addComponent(selectedLabel);
+		topBox.addComponent(selectedLabel);
 		
 		//Scrollbar
 		sB = new ScrollBar();
@@ -53,29 +56,31 @@ public class DropDown<E> extends Component {
 		selectedLabel.text = selectedItem.getKey();
 	}
 	
-	public E getSelected() {return selectedItem.getValue();}
-	
-	public LinkedHashMap<String, E> getOptions() {return options;}
-	
 	@Override
 	public void doClick(Point p) {
-		if (isSelected()) close(scalePoint(p));
+		CLI.debug("CLICK");
+		boolean closed = false;
+		if (isSelected()) {
+			close(scalePoint(p));
+			closed = true;
+		}
 		else open();
 		super.doClick(p);
+		if (closed) doDeselect();
 	}
 	
 	@Override
 	public void doDeselect() {
-		close(null);
+		if (isSelected()) close(null);
 		super.doDeselect();
 	}
 
 	private void open() {
 		if (actions!=null) {
 			options = actions.get();
-			options.put("Extra1", null);
+			/*options.put("Extra1", null);
 			options.put("Extra2", null);
-			options.put("Extra3", null);
+			options.put("Extra3", null);*/
 		}
 		if (options.isEmpty()) return;
 		
@@ -131,20 +136,20 @@ public class DropDown<E> extends Component {
 			if (i>=0&&i<options.size()) selectedItem = getOptionAt(i);
 			if (selectedItem!=null) selectedLabel.text = selectedItem.getKey();
 			
-			if (actions!=null) actions.submit(getSelected());
+			if (actions!=null) actions.submit(selectedItem.getValue());
 		}
 
 		setSelected(false);
 		decreasePriority();
 		Set<Component> toRemove = new HashSet<>();
 		for (Component c : getComponents()) {
-			if (c instanceof SimpleBox || (c instanceof Label && c!= selectedLabel)) {
+			if ((c instanceof SimpleBox && c!= topBox) || (c instanceof Label && c!= selectedLabel)) {
 				toRemove.add(c);
 			}
 		}
 		removeComponents(toRemove);
 		
-		//Update scrollbar
+		//Disarm scrollbar
 		sB.setY(sB.getOriginalRec().y);
 		sB.setHeight(sB.getOriginalRec().height);
 		sB.setArmed(false);
@@ -152,25 +157,18 @@ public class DropDown<E> extends Component {
 	
 	@Override
 	public void doHover() {
-		Utils.setCursorDefault(Cursor.HAND_CURSOR);
+		Utils.setCursor(Cursor.HAND_CURSOR);
 	}
 
 	@Override
 	public void doUnhover() {
-		Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+		Utils.setCursor(Cursor.DEFAULT_CURSOR);
 	}
 	
 	@Override
 	public void doScroll(Point p, int amount) {
 		sB.scroll(amount);
 	}
-
-	/*@Override
-	public boolean isOver(Point p) {
-		//Overridden as this allows a different isOver result for an open selector then for a closed one
-		if (!isSelected()) return super.isOver(p);
-		else return super.isOver(p, new Rectangle(r.x, r.y, r.width, r.height*(options.size()+1)));
-	}*/
 	
 	private Map.Entry<String, E> getOptionAt(int i) {
 		int z = 0;
@@ -179,11 +177,5 @@ public class DropDown<E> extends Component {
 			z++;
 		}
 		return null;
-	}
-
-	@Override
-	public void draw(Graphics2D g) {
-		GUI.getInstance().getScreenUtils().drawDropDown(g, this);
-		super.draw(g);
 	}
 }

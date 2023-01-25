@@ -1,8 +1,8 @@
 package general;
 
-public interface Functional<T, E> {
+public interface Functional<G, S> {
 
-	public void submit(E e);
+	public void submit(S e);
 	
-	public T get();
+	public G get();
 }

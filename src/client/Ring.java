@@ -18,7 +18,7 @@ public class Ring {
 	boolean recieving;
 	boolean ended; //Used to avoid errors from threads still executing after call has ended
 
-	public Ring(Connection c, boolean recieving) {
+	protected Ring(Connection c, boolean recieving) {
 		this.recieving = recieving;
 		this.c = c;
 		ended = false;
@@ -32,7 +32,7 @@ public class Ring {
 	 * 
 	 * @return
 	 */
-	public Connection stealConnectionHandler() {
+	protected Connection stealConnectionHandler() {
 		Connection c = this.c;
 		this.c = null;
 		return c;
@@ -116,8 +116,11 @@ public class Ring {
 		}
 
 		Message m = Message.decode(c.getData());
-		if (m==null) CLI.error("Recieved bad message");
-		CLI.debug("Recieved: "+m.toString());
+		if (m==null) {
+			CLI.error("Recieved bad message");
+			return;
+		}
+		c.debug(m, true);
 
 		switch (m.getCode()) {
 		case CallRequest:
@@ -161,8 +164,9 @@ public class Ring {
 			GUI.getInstance().addMessage("The client is busy", MessageBox.info);
 			break;
 
-		case CallError:
-			c.write(new Message(Code.CallErrorAck));
+		case LocalError:
+			c.write(new Message(Code.LocalErrorAck));
+			c.close();
 			Client.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("There was an error with the ring", MessageBox.error);
 			break;

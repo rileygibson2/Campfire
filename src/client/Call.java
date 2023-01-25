@@ -23,7 +23,7 @@ public class Call {
 
 	byte[] data;
 
-	public Call(Connection c) {
+	protected Call(Connection c) {
 		this.c = c;
 		c.setOnUpdate(() -> handleData());
 		data = new byte[AudioManager.blockLength];
@@ -37,7 +37,7 @@ public class Call {
 	 * 
 	 * @return
 	 */
-	public Connection stealConnectionHandler() {
+	protected Connection stealConnectionHandler() {
 		Connection c = this.c;
 		this.c = null;
 		return c;
@@ -83,15 +83,17 @@ public class Call {
 		//Check for codes
 		Message m = Message.decode(data);
 		if (m!=null) {
-			CLI.debug("Recieved: "+m.toString());
+			c.debug(m, true);
+			
 			switch (m.getCode()) {
 			case CallEnd:
 				c.write(new Message(Code.CallEndAck));
 				Client.getInstance().endCall(false);
 				return;
 				
-			case CallError:
-				c.write(new Message(Code.CallErrorAck));
+			case LocalError:
+				c.write(new Message(Code.LocalErrorAck));
+				c.close();
 				Client.getInstance().destroyAll(); //Reset client
 				GUI.getInstance().addMessage("There was an error with the call", MessageBox.error);
 				return;

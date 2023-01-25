@@ -41,7 +41,7 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 		xAdj = 1;
 		yAdj = 0;
 		maxWidth = 0;
-		
+
 		addMouseWheelListener(this);
 	}
 
@@ -62,7 +62,7 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 		yAdj += e.getPreciseWheelRotation();
 		repaint();
 	}
-	
+
 	@Override
 	public void keyPressed(KeyEvent e) {
 		if (e.getExtendedKeyCode()==KeyEvent.VK_LEFT) xAdj += 25;
@@ -80,14 +80,14 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 		double y = 2;
 		double totalY = screenUtils.getStringHeightAsPerc(g2, f)*stack.size();
 		if (totalY>100) y -= (totalY-100);
-		
+
 		//Verify start positions
 		if (maxWidth>100) {
 			if (xAdj<-(maxWidth-100)) xAdj = -(maxWidth-100);
 		}
 		else xAdj = 1;
 		if (xAdj>1) xAdj = 1;
-		
+
 		if (totalY<100) yAdj = 0;
 		else {
 			if (yAdj<-(totalY-100)) yAdj = -(totalY-100);
@@ -109,6 +109,14 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 			if (w>maxWidth) maxWidth = w;
 
 			y += screenUtils.getStringHeightAsPerc(g2, f);
+		}
+
+		//Verbose symbol
+		if (CLI.isVerbose()) {
+			double w = screenUtils.getStringWidthAsPerc(g2, f, "Verbose")+3;
+			double h = screenUtils.getStringHeightAsPerc(g2, f)+3;
+			screenUtils.fillRoundRect(g2, new Color(255, 80, 80), new Rectangle(100-w-5, 2, w, h));
+			screenUtils.drawCenteredString(g2, f, "Verbose", Color.WHITE, new Rectangle(100-w-5, 2, w, h));
 		}
 	}
 

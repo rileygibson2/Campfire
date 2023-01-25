@@ -21,12 +21,34 @@ public class CLI {
 
 	private static Map<String, Pair<String, Color>> colors;
 	private static boolean initialised = false;
+	private static boolean verbose = false; //Classes can choose to only log things if this is set
 
 	private CLI() {};
 
-	public static boolean viewerActive() {return cliV.isActive();}
-	
-	public static void showViewer(boolean b) {cliV.setActive(b);}
+	public static void setVerbose(boolean v) {
+		if (v!=verbose) {
+			if (v) CLI.cliDebug("Entered verbose mode");
+			else CLI.cliDebug("Exited verbose mode");
+		}
+		verbose = v;
+	}
+
+	public static boolean isVerbose() {return verbose;}
+
+	public static boolean viewerActive() {
+		if (!initialised) initialise();
+		return cliV.isActive();
+	}
+
+	public static void showViewer(boolean b) {
+		if (!initialised) initialise();
+		cliV.setActive(b);
+	}
+
+	public static CLIViewer getViewer() {
+		if (!initialised) initialise();
+		return cliV;
+	}
 
 	public static void initialise() {
 		colors = new HashMap<String, Pair<String, Color>>();
@@ -34,10 +56,14 @@ public class CLI {
 		colors.put("AudioManager", new Pair<String, Color>(orange, new Color(200, 255, 0)));
 		colors.put("ThreadController", new Pair<String, Color>(magenta, new Color(255, 0, 255)));
 		colors.put("Ring", new Pair<String, Color>(gray, new Color(80, 80, 80)));
-		colors.put("Call", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("Call", new Pair<String, Color>(gray, new Color(0, 200, 255)));
+		colors.put("Special", new Pair<String, Color>(gray, new Color(0, 200, 255)));
+		colors.put("NetworkManager", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("Connection", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
 		colors.put("DOM", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("Console", new Pair<String, Color>(orange, new Color(200, 255, 0)));
 		cliV = CLIViewer.initialise();
-		
+
 		initialised = true;
 	}
 
@@ -53,6 +79,19 @@ public class CLI {
 		if (!initialised) initialise();
 		CLIMessage m = new CLIMessage(getCallerClassName(), message);
 		m.setError();
+
+		System.out.println(m.formatForConsole());
+		cliV.print(m);
+	}
+	
+	/**
+	 * For when the CLI class itself wants to print a message
+	 * 
+	 * @param message
+	 */
+	private static void cliDebug(String message) {
+		if (!initialised) initialise();
+		CLIMessage m = new CLIMessage("Console", message);
 
 		System.out.println(m.formatForConsole());
 		cliV.print(m);

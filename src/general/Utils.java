@@ -26,8 +26,8 @@ public class Utils {
 		return Utils.class.getClassLoader().getResource(path);
 	}
 	
-	public static void setCursorDefault(int c) {
-		GUI.frame.setCursor(Cursor.getPredefinedCursor(c));
+	public static void setCursor(int c) {
+		//GUI.frame.setCursor(Cursor.getPredefinedCursor(c));
 	}
 	
 	/**

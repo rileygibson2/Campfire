@@ -1,6 +1,8 @@
 package client;
 
 import java.awt.Color;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,8 +25,7 @@ public class Client {
 	Call call;
 	Special special;
 
-	public static final String ipRegex = "^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\\.(?!$)|$)){4}$";
-	private static String clientIP;
+	private static InetAddress clientIP;
 	private static int listenPort;
 	private static int connectPort;
 	private static boolean shutdown;
@@ -38,7 +39,7 @@ public class Client {
 		if (singleton==null) singleton = new Client();
 		return singleton;
 	}
-	
+
 	public boolean isCommunicating() {
 		if (ring!=null||call!=null||special!=null) return true;
 		return false;
@@ -70,7 +71,7 @@ public class Client {
 			try {c = NetworkManager.getInstance().generateConnection(true);}
 			catch (ConnectionException e) {connectionExceptionHandle(e);}
 			if (c==null) return;
-			
+
 			ring = new Ring(c, false);
 			ring.start();
 		}
@@ -103,7 +104,7 @@ public class Client {
 		if (ring!=null) ring.decline();
 		destroyAll();
 	}
-	
+
 	/**
 	 * Should only ever be called by a Ring object
 	 */
@@ -147,7 +148,7 @@ public class Client {
 			try {c = NetworkManager.getInstance().generateConnection(true);}
 			catch (ConnectionException e) {connectionExceptionHandle(e);}
 			if (c==null) return;
-			
+
 			special = new Special(c, type, false);
 			special.start();
 		}
@@ -157,7 +158,7 @@ public class Client {
 			if (special!=null) CLI.error("Already in special, cannot special");
 		}
 	}
-	
+
 	/**
 	 * Should only ever be called by the ConnectionRouter
 	 * @param c
@@ -174,7 +175,7 @@ public class Client {
 			if (special!=null) CLI.error("Already in special, cannot special");
 		}
 	}
-	
+
 	/**
 	 * Called from GUI component and Special (upon recieving end code)
 	 */
@@ -188,7 +189,7 @@ public class Client {
 		}
 		destroyAll();
 	}
-	
+
 	public void destroyAll() {
 		if (ring!=null) {
 			ring.destroy();
@@ -203,48 +204,88 @@ public class Client {
 			special = null;
 		}
 	}
-	
+
 	public void connectionExceptionHandle(ConnectionException e) {
 		Color col = MessageBox.error;
 		String m = "";
-		if (e.getMessage().contains("Connection refused")) m = "Connection to "+getIP()+" refused";
-		else if (e.getMessage().contains("Cannot call self")) m = "The address "+getIP()+":"+getConnectPort()+" is in use by this computer";
+		if (e.getMessage().contains("Connection refused")) m = "Connection to "+getIP().getHostAddress()+":"+getConnectPort()+" refused";
+		else if (e.getMessage().contains("Cannot call self")) m = "You cannot call yourself";
 		else if (e.getMessage().contains("Destination IP is null")) {
 			m = "Please specify the IP of the other Intercom";
 			col = MessageBox.info;
 		}
-		else if (e.getMessage().contains("Destination IP is invalid")) m = "The IP "+getIP()+" is invalid";
 		else if (e.getMessage().contains("Connect Port is invalid")) m = "Connecting on port "+getConnectPort()+" is not allowed";
-		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+getIP()+":"+getConnectPort();
+		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+getIP().getHostAddress()+":"+getConnectPort();
 		else if (e.getMessage().contains("Network is unreachable")) m = "Check your internet connection";
-		else if (e.getMessage().contains("Host is down")) m = "The host "+getIP()+" is unavailable";
-		else m = "Error making connection to "+getIP()+":"+getConnectPort();
-		
+		else if (e.getMessage().contains("Host is down")) m = "The host "+getIP().getHostAddress()+" is unavailable";
+		else m = "Error making connection to "+getIP().getHostAddress()+":"+getConnectPort();
+
 		//Fatal errors have already been reported
 		if (!e.isFatal()) cGUI.addMessage(m, col);
 	}
 
-	public static String getIP() {return clientIP;}
+	public static InetAddress getIP() {return clientIP;}
 
 	public static void setIP(String ip) {
-		if (ip.matches(ipRegex)) {
-			clientIP = ip;
-			CLI.debug("IP set as: "+clientIP);
+		InetAddress address = null;
+		try {address = InetAddress.getByName(ip);}
+		catch (UnknownHostException e) {
+			CLI.error("IP not set - invalid");
+			cGUI.addMessage("IP "+ip+" is invalid ", MessageBox.error);
+			return;
 		}
+
+		if (ip.equals(clientIP.getHostAddress())) return;
+		clientIP = address;
+		CLI.debug("IP set as: "+clientIP.getHostAddress());
+		cGUI.addMessage("IP set as "+clientIP.getHostAddress(), MessageBox.ok);
 	}
 
 	public static int getListenPort() {return listenPort;}
 
-	public static void setListenPort(int p) {
-		listenPort = p;
-		CLI.debug("Listen Port set as: "+listenPort);
+	public static void setListenPort(String p, boolean restart) {
+		try {setListenPort(Integer.parseInt(p), restart);}
+		catch (NumberFormatException e) {
+			CLI.error("Listen Port not set - invalid");
+			cGUI.addMessage("Port "+p+" is invalid", MessageBox.error);
+		}
+	}
+
+	public static void setListenPort(int p, boolean restart) {
+		if (p==listenPort) return;
+		if (p>1024) {
+			listenPort = p;
+			CLI.debug("Listen Port set as: "+p);
+			cGUI.addMessage("Listen port set as "+p, MessageBox.ok);
+			if (restart) NetworkManager.restart();
+		}
+		else {
+			CLI.error("Listen Port not set - reserved");
+			cGUI.addMessage("Listening on port "+p+" is not allowed", MessageBox.error);
+		}
 	}
 
 	public static int getConnectPort() {return connectPort;}
 
+	public static void setConnectPort(String p) {
+		try {setConnectPort(Integer.parseInt(p));}
+		catch (NumberFormatException e) {
+			CLI.error("Connect Port not set - invalid");
+			cGUI.addMessage("Port "+p+" is invalid", MessageBox.error);
+		}
+	}
+
 	public static void setConnectPort(int p) {
-		connectPort = p;
-		CLI.debug("Connect Port set as: "+connectPort);
+		if (p==connectPort) return;
+		if (p>1024) {
+			connectPort = p;
+			CLI.debug("Connect Port set as: "+p);
+			cGUI.addMessage("Connect port set as "+p, MessageBox.ok);
+		}
+		else {
+			CLI.error("Connect Port not set - reserved");
+			cGUI.addMessage("Connecting on port "+p+" is not allowed", MessageBox.error);
+		}
 	}
 
 	public static boolean isShuttingdown() {return shutdown;}
@@ -252,25 +293,25 @@ public class Client {
 	public void shutdown() {
 		shutdown = true;
 		CLI.debug("Shutting down...");
-	
+
 		//Deal with active things
 		if (ring!=null) {
 			Connection cH = ring.stealConnectionHandler();
-			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+			if (cH!=null) cH.writeCarelessly(new Message(Code.LocalError).formatBytes());
 		}
 		if (call!=null) {
 			Connection cH = call.stealConnectionHandler();
-			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+			if (cH!=null) cH.writeCarelessly(new Message(Code.LocalError).formatBytes());
 		}
 		if (special!=null) {
 			Connection cH = special.stealConnectionHandler();
-			if (cH!=null) cH.writeCarelessly(new Message(Code.CallError).formatBytes());
+			if (cH!=null) cH.writeCarelessly(new Message(Code.LocalError).formatBytes());
 		}
-		
+
 		//Call other shutdowns
 		NetworkManager.getInstance().shutdown();
-		AudioManager.getInstance().release();
-		CLI.debug("Shutdown done.");
+		AudioManager.getInstance().shutdown();
+		CLI.debug("Shutdown complete.");
 	}
 
 	private void setup() {
@@ -282,7 +323,8 @@ public class Client {
 		call = null;
 		ring = null;
 
-		clientIP = "127.0.0.1";
+		try {clientIP = InetAddress.getByName("127.0.0.1");}
+		catch (UnknownHostException e) {}
 		listenPort = 5000;
 		connectPort = 5000;
 	}
@@ -297,11 +339,11 @@ public class Client {
 
 		if (args.length==1) {
 			if (Integer.parseInt(args[0])==1) {
-				Client.setListenPort(5001);
+				Client.setListenPort(5001, false);
 				Client.setConnectPort(5000);
 			}
 			else {
-				Client.setListenPort(5000);
+				Client.setListenPort(5000, false);
 				Client.setConnectPort(5001);
 			}
 		}

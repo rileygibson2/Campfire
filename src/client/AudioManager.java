@@ -334,7 +334,7 @@ public class AudioManager {
 		return samples;
 	}
 
-	public void release() {
+	public void shutdown() {
 		if (speakerLine!=null) {
 			speakerLine.close();
 			speakerLine = null;
@@ -344,5 +344,6 @@ public class AudioManager {
 			micLine.close();
 			micLine = null;
 		}
+		CLI.debug("Shutdown");
 	}
 }

@@ -13,8 +13,9 @@ import cli.CLI;
 import client.Client;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
+import threads.ThreadController;
 
-public class Connection extends Thread {
+public class Connection extends ThreadController {
 
 	private Socket socket;
 	private InputStream in;
@@ -56,11 +57,11 @@ public class Connection extends Thread {
 	public void run() {
 		if (isListening) return;
 		try {listen();}
-		catch (ConnectionException e) {fatalErrorAction();}
+		catch (ConnectionException e) {fatalError();}
 	}
 
 	public void write(Message m) {
-		CLI.debug("Writing: "+m.getCode().toString());
+		debug(m, false);
 		write(m.formatBytes());
 	}
 
@@ -71,13 +72,13 @@ public class Connection extends Thread {
 		}
 		catch (IOException e) {
 			if (!Client.isShuttingdown()) CLI.error("Error trying to write bytes to output stream.");
-			fatalErrorAction();
+			fatalError();
 		}
-		catch (ConnectionException e) {fatalErrorAction();}
+		catch (ConnectionException e) {fatalError();}
 	}
 
 	/**
-	 * Used when writing shutdown codes or error codes, will write and
+	 * Used when writing shutdown codes or fatal error codes, will write and
 	 * swallow any exceptions.
 	 * 
 	 * @param m
@@ -98,8 +99,7 @@ public class Connection extends Thread {
 		byte[] buffer = new byte[1024];
 		int bytesRead;
 		try {
-			while (true) {
-				if (safelyClosed) break;
+			while (isRunning()) {
 				bytesRead = in.read(buffer);
 				if (bytesRead==-1) break;
 				
@@ -107,7 +107,7 @@ public class Connection extends Thread {
 				if (onUpdate!=null) onUpdate.run();
 			}
 		}
-		catch (IOException e) {throw new ConnectionException("There was a problem while listening to the socket");}
+		catch (IOException e) {if (!safelyClosed) throw new ConnectionException("There was a problem while listening to the socket");}
 		isListening = false;
 	}
 	
@@ -118,10 +118,10 @@ public class Connection extends Thread {
 	 * Carelessly writes error code and terminates connection, then prints error
 	 * message to GUI and resets Client.
 	 */
-	private void fatalErrorAction() {
+	private void fatalError() {
 		if (safelyClosed) return;
 		CLI.debug("Carelessly writing error code");
-		writeCarelessly(new Message(Code.CallError).formatBytes());
+		writeCarelessly(new Message(Code.LocalError).formatBytes());
 		close();
 		Client.getInstance().destroyAll();
 		GUI.getInstance().addMessage("An error occured with the connection", MessageBox.error);
@@ -150,14 +150,29 @@ public class Connection extends Thread {
 		if (!socket.isBound()) throw new ConnectionException("Socket is not bound!");
 		if (!socket.isConnected()) throw new ConnectionException("Socket is not connected!");
 	}
+	
+	/**
+	 * Used to decide whether to pring message to console.
+	 * 
+	 * @param m
+	 */
+	public void debug(Message m, boolean recieved) {
+		if ((!m.getCode().equals(Code.Ping)&&!m.getCode().equals(Code.PingAck)
+				||CLI.isVerbose()) ) {
+			if (recieved) CLI.debug("Recieved: "+m.toString());
+			else CLI.debug("Writing: "+m.toString());
+		}
+	}
 
 	public void close() {
 		try {
+			end();
 			if (in!=null) in.close();
 			if (out!=null) out.close();
 			if (socket!=null) socket.close();
 			safelyClosed = true;
+			NetworkManager.getInstance().removeConnection(this);
 		} 
-		catch (IOException e) {CLI.error("Problem closing Connection Handler");}
+		catch (IOException e) {CLI.error("Problem closing connection");}
 	}
 }

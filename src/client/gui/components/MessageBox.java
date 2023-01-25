@@ -14,7 +14,7 @@ import threads.ThreadController;
 public class MessageBox extends Component {
 
 	public static Color error = new Color(220, 100, 100);
-	public static Color ok = new Color(220, 100, 100);
+	public static Color ok = new Color(100, 200, 100);
 	public static Color info = new Color(80, 80, 80);
 	
 	private SimpleBox mainBox;

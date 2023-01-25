@@ -26,7 +26,7 @@ public class Special {
 
 	byte[] buffer;
 
-	public Special(Connection c, Type type, boolean recieving) {
+	protected Special(Connection c, Type type, boolean recieving) {
 		this.type = type;
 		this.recieving = recieving;
 		this.c = c;
@@ -42,7 +42,7 @@ public class Special {
 	 * 
 	 * @return
 	 */
-	public Connection stealConnectionHandler() {
+	protected Connection stealConnectionHandler() {
 		Connection c = this.c;
 		this.c = null;
 		return c;
@@ -92,8 +92,11 @@ public class Special {
 		}
 
 		Message m = Message.decode(c.getData());
-		if (m==null) CLI.error("Recieved bad message");
-		CLI.debug("Recieved: "+m.toString());
+		if (m==null) {
+			CLI.error("Recieved bad message");
+			return;
+		}
+		c.debug(m, true);
 
 		switch (m.getCode()) {
 		case SpecialRequest:
@@ -122,8 +125,9 @@ public class Special {
 			GUI.getInstance().addMessage("The special type was invalid", MessageBox.error);
 			break;
 
-		case CallError:
-			c.write(new Message(Code.CallErrorAck));
+		case LocalError:
+			c.write(new Message(Code.LocalErrorAck));
+			c.close();
 			Client.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("There was an error with the special", MessageBox.error);
 			break;

@@ -82,12 +82,12 @@ public class TextBox extends Component {
 	
 	@Override
 	public void doHover() {
-		Utils.setCursorDefault(Cursor.HAND_CURSOR);
+		Utils.setCursor(Cursor.HAND_CURSOR);
 	}
 
 	@Override
 	public void doUnhover() {
-		Utils.setCursorDefault(Cursor.DEFAULT_CURSOR);
+		Utils.setCursor(Cursor.DEFAULT_CURSOR);
 	}
 
 	@Override

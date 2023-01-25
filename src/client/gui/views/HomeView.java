@@ -149,11 +149,11 @@ public class HomeView extends View {
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
-			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP());
+			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP().getHostAddress());
 			
 			t.setActions(new Functional<String, String>() {
 				public void submit(String s) {Client.setIP(s);}
-				public String get() {return Client.getIP();}
+				public String get() {return Client.getIP().getHostAddress();}
 			});
 			
 			p.addPopUpComponent(t);
@@ -169,7 +169,7 @@ public class HomeView extends View {
 		y -= 20;
 		final Button settings = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
 		sB.addComponent(settings);
-		settings.setClickAction(() -> Client.cGUI.changeView(SettingsView.getInstance()));
+		settings.setClickAction(() -> Client.cGUI.changeView(new SettingsView()));
 		settings.setHoverAction(() -> adjustColorHover(settings, true));
 		settings.setUnHoverAction(() -> adjustColorHover(settings, false));
 		settings.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "settings.png"));

@@ -60,14 +60,8 @@ public class ScreenUtils {
 		else drawStringFromPoint(g, l.font, l.text, col, new Point(r.x, r.y));
 	}
 
-	public void drawDropDown(Graphics2D g, DropDown<?> s) {
-		Rectangle r = s.getRealRec();
-		fillRoundRect(g, new Color(80, 80, 80), r);
-	}
-
 	public void drawButton(Graphics2D g, Button b) {
 		Rectangle r = b.getRealRec();
-		
 		fillRoundRect(g, b.col, r);
 	}
 

@@ -26,20 +26,19 @@ import general.Rectangle;
 
 public class SettingsView extends View {
 
-	private static SettingsView singleton;
-
 	DropDown<Mixer.Info> audioIn;
 	DropDown<Mixer.Info> audioOut;
 	DropDown<Line.Info> remote;
 	Color bg = new Color(50, 50, 50);
 
-	private SettingsView() {
+	public SettingsView() {
 		super(ViewType.Settings, new Rectangle(10, 10, 80, 80));
-		int x = 6;	
-		
-		//Input dropdown
-		addComponent(new Label(new Point(x, 12), "Microphone", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		audioIn = new DropDown<>(new Rectangle(x, 18, 40, 15));
+		int x = 6;
+		int y = 12;
+
+		//Audio input dropdown
+		addComponent(new Label(new Point(x, y), "Microphone", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		audioIn = new DropDown<>(new Rectangle(x, y+6, 40, 15));
 		audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
 		addComponent(audioIn);
 
@@ -53,12 +52,12 @@ public class SettingsView extends View {
 			public LinkedHashMap<String, Info> get() {
 				return AudioManager.getInstance().listMicrophones();
 			}
-			
 		});
 
-		//Output dropdown
-		addComponent(new Label(new Point(x, 42), "Speaker", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		audioOut = new DropDown<Mixer.Info>(new Rectangle(x, 48, 40, 15));
+		//Audio output dropdown
+		y += 35;
+		addComponent(new Label(new Point(x, y), "Speaker", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		audioOut = new DropDown<Mixer.Info>(new Rectangle(x, y+6, 40, 15));
 		audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
 		addComponent(audioOut);
 
@@ -72,19 +71,34 @@ public class SettingsView extends View {
 			public LinkedHashMap<String, Info> get() {
 				return AudioManager.getInstance().listSpeakers();
 			}
-			
 		});
 
 		//Remote dropdown
-		addComponent(new Label(new Point(x, 72), "Remote", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		/*addComponent(new Label(new Point(x, 72), "Remote", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
 		remote = new DropDown<>(new Rectangle(x, 78, 40, 15));
 		remote.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
-		addComponent(remote);
+		addComponent(remote);*/
 
-		//Port textbox
+		//Connect port textbox
 		x = 55;
-		addComponent(new Label(new Point(x, 12), "Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		addComponent(new TextBox(new Rectangle(x, 18, 40, 15), ""+Client.getConnectPort()));
+		y = 12;
+		addComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Client.getConnectPort());
+		t.setActions(new Functional<String, String>() {
+			public void submit(String s) {Client.setConnectPort(s);}
+			public String get() {return ""+Client.getConnectPort();}
+		});
+		addComponent(t);
+
+		//Listen port textbox
+		y += 35;
+		addComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
+		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Client.getListenPort());
+		t.setActions(new Functional<String, String>() {
+			public void submit(String s) {Client.setListenPort(s, true);}
+			public String get() {return ""+Client.getListenPort();}
+		});
+		addComponent(t);
 
 		//Exit button
 		Button b = new Button(new Rectangle(92, 4, 6, 12), new Color(100, 100, 100));
@@ -93,16 +107,8 @@ public class SettingsView extends View {
 		addComponent(b);
 	}
 
-	public static SettingsView getInstance() {
-		if (singleton==null) singleton = new SettingsView();
-		return singleton;
-	};
-
 	@Override
-	public void enter() {
-		// TODO Auto-generated method stub
-
-	}
+	public void enter() {}
 
 	@Override
 	public void draw(Graphics2D g) {

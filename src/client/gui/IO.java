@@ -13,6 +13,7 @@ import java.util.Set;
 import cli.CLI;
 import client.gui.components.Component;
 import general.Point;
+import network.NetworkManager;
 
 public class IO implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 	
@@ -86,6 +87,11 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 			if (GUI.getInstance().dom.visualiserVisible()) show = false;
 			GUI.getInstance().dom.showVisualiser(show);
 		}
+		if (e.getExtendedKeyCode()==KeyEvent.VK_V) {
+			CLI.setVerbose(!CLI.isVerbose());
+			CLI.getViewer().repaint();
+		}
+		if (e.getExtendedKeyCode()==KeyEvent.VK_I) NetworkManager.getInstance().printLocalAddresses();
 		finishEvent();
 	}
 
