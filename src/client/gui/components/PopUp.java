@@ -27,7 +27,8 @@ public class PopUp extends Component {
 		addComponent(mainBox);
 
 		//Top bar
-		SimpleBox tB = new SimpleBox(new Rectangle(0, 0, 100, 25), new Color(100, 100, 100));
+		SimpleBox tB = new SimpleBox(new Rectangle(getX(), getY(), getWidth(), 12.5), new Color(100, 100, 100));
+		tB.setAbsolute(true);
 		tB.setRounded(new int[]{1, 4});
 		mainBox.addComponent(tB);
 
@@ -35,12 +36,14 @@ public class PopUp extends Component {
 		l.setCentered(true);
 		tB.addComponent(l);
 
-		Button b = new Button(new Rectangle(70, 75, 10, 20), new Color(100, 100, 100));
+		Button b = new Button(new Rectangle(getX()+getWidth()*0.70, getY()+getHeight()*0.75, 5, 10), new Color(100, 100, 100));
+		b.setAbsolute(true);
 		b.setClickAction(() -> close(false));
 		b.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
 		mainBox.addComponent(b);
 
-		b = new Button(new Rectangle(85, 75, 10, 20), new Color(100, 200, 100));
+		b = new Button(new Rectangle(getX()+getWidth()*0.85, getY()+getHeight()*0.75, 5, 10), new Color(100, 200, 100));
+		b.setAbsolute(true);
 		b.setClickAction(() -> close(true));
 		b.addComponent(new Image(new Rectangle(25, 25, 50, 50), "ok.png"));
 		mainBox.addComponent(b);

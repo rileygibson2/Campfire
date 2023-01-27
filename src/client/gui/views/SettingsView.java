@@ -13,7 +13,7 @@ import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
 import client.AudioManager;
-import client.Client;
+import client.Intercom;
 import client.gui.GUI;
 import client.gui.components.Button;
 import client.gui.components.DropDown;
@@ -83,26 +83,26 @@ public class SettingsView extends View {
 		x = 55;
 		y = 12;
 		addComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Client.getConnectPort());
+		TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getConnectPort());
 		t.setActions(new Functional<String, String>() {
-			public void submit(String s) {Client.setConnectPort(s);}
-			public String get() {return ""+Client.getConnectPort();}
+			public void submit(String s) {Intercom.setConnectPort(s);}
+			public String get() {return ""+Intercom.getConnectPort();}
 		});
 		addComponent(t);
 
 		//Listen port textbox
 		y += 35;
 		addComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
-		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Client.getListenPort());
+		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getListenPort());
 		t.setActions(new Functional<String, String>() {
-			public void submit(String s) {Client.setListenPort(s, true);}
-			public String get() {return ""+Client.getListenPort();}
+			public void submit(String s) {Intercom.setListenPort(s, true);}
+			public String get() {return ""+Intercom.getListenPort();}
 		});
 		addComponent(t);
 
 		//Exit button
 		Button b = new Button(new Rectangle(92, 4, 6, 12), new Color(100, 100, 100));
-		b.setClickAction(() -> Client.cGUI.changeView(HomeView.getInstance()));
+		b.setClickAction(() -> Intercom.cGUI.changeView(HomeView.getInstance()));
 		b.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
 		addComponent(b);
 	}

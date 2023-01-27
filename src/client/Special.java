@@ -5,9 +5,9 @@ import client.gui.GUI;
 import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
 import client.gui.views.SpecialView;
-import network.Code;
-import network.Connection;
-import network.Message;
+import network.connection.Connection;
+import network.messages.Code;
+import network.messages.Message;
 import threads.ThreadController;
 
 public class Special {
@@ -69,7 +69,7 @@ public class Special {
 			writer.start();
 		}
 		else { //Recieving should start immediatly while sender has to wait for ack
-			Client.cGUI.changeView(new SpecialView(type, recieving));
+			Intercom.cGUI.changeView(new SpecialView(type, recieving));
 			startAudio();
 		}
 	}
@@ -87,7 +87,7 @@ public class Special {
 
 	public void handleData() {
 		if (c==null) {
-			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 
@@ -108,27 +108,27 @@ public class Special {
 			//Client has acked so don't need to send request anymore
 			if (writer!=null) writer.end();
 			if (!recieving) {
-				Client.cGUI.changeView(new SpecialView(type, recieving));
+				Intercom.cGUI.changeView(new SpecialView(type, recieving));
 				startAudio();
 			}
 			break;
 
 		case SpecialEnd:
 			c.write(new Message(Code.SpecialEndAck));
-			Client.getInstance().endSpecial(false);
+			Intercom.getInstance().endSpecial(false);
 			break;
 			
 		case InvalidSpecialType:
 			//Special type was computed as invalid on the other end
 			c.write(new Message(Code.InvalidSpecialTypeAck));
-			Client.getInstance().destroyAll(); //Reset client
+			Intercom.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("The special type was invalid", MessageBox.error);
 			break;
 
 		case LocalError:
 			c.write(new Message(Code.LocalErrorAck));
 			c.close();
-			Client.getInstance().destroyAll(); //Reset client
+			Intercom.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("There was an error with the special", MessageBox.error);
 			break;
 
@@ -146,6 +146,6 @@ public class Special {
 		if (audio!=null) audio.end();
 		if (writer!=null) writer.end();
 		if (c!=null) c.close();
-		Client.cGUI.changeView(HomeView.getInstance());
+		Intercom.cGUI.changeView(HomeView.getInstance());
 	}
 }

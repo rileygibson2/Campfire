@@ -2,13 +2,13 @@ package client.gui.views;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.awt.Graphics2D;
 
 import client.AudioManager;
-import client.Client;
+import client.Intercom;
 import client.Special.Type;
 import client.gui.components.Button;
+import client.gui.components.CheckBox;
 import client.gui.components.GradientButton;
 import client.gui.components.Image;
 import client.gui.components.Label;
@@ -19,7 +19,7 @@ import client.gui.components.TextBox;
 import general.Functional;
 import general.Point;
 import general.Rectangle;
-import network.NetworkManager;
+import network.managers.NetworkManager;
 
 public class HomeView extends View {
 
@@ -27,7 +27,7 @@ public class HomeView extends View {
 	
 	SimpleBox extrasPopup;
 	Slider volumeSlider;
-	public Image conImage;
+	public Image linkImage;
 
 	private HomeView() {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
@@ -39,7 +39,7 @@ public class HomeView extends View {
 		//Xbox buttons
 		Button b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(89, 141, 19), new Color(112, 255, 12));
 		b.addComponent(new Image(new Rectangle(17.5, 25, 65, 50), "mic.png"));
-		b.setClickAction(() -> Client.getInstance().startInitiatingRing());
+		b.setClickAction(() -> Intercom.getInstance().startInitiatingRing());
 		b.freezeShadow();
 		addComponent(b);
 
@@ -63,27 +63,36 @@ public class HomeView extends View {
 		addComponent(sB);
 		int y = 80;
 
-		//Connection
-		final Button con = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
-		sB.addComponent(con);
-		con.setClickAction(() -> {
-			String c = "Currently disconnected";
-			if (NetworkManager.getInstance().isProbablyConnected()) c = "Currently connected";
-			
+		//Link
+		final Button link = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
+		sB.addComponent(link);
+		link.setClickAction(() -> {
 			PopUp p = new PopUp("Intercom Status", new Point(50, 50));
-			Label l = new Label(new Point(50, 50), c, new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230));
+			Label l = new Label(new Point(50, 50), "", new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230)) {
+				@Override
+				public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
+					if (NetworkManager.getInstance().isProbablyLinked()) text = "Currently connected";
+					else text = "Currently disconnected";
+					super.draw(g);
+				}
+			};
 			l.setCentered(true);
 			p.addPopUpComponent(l);
 			p.increasePriority();
 			addComponent(p);
 		});
-		con.setHoverAction(() -> adjustColorHover(con, true));
-		con.setUnHoverAction(() -> adjustColorHover(con, false));
+		link.setHoverAction(() -> adjustColorHover(link, true));
+		link.setUnHoverAction(() -> adjustColorHover(link, false));
 		
-		String src = "disconnected.png";
-		if (NetworkManager.getInstance().isProbablyConnected()) src = "connected.png";
-		conImage = new Image(new Rectangle(23, 20, 50, 55), src);
-		con.addComponent(conImage);
+		Image linkImage = new Image(new Rectangle(23, 20, 50, 55), "") {
+			@Override
+			public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
+				if (NetworkManager.getInstance().isProbablyLinked()) src = "connected.png";
+				else src = "disconnected.png";
+				super.draw(g);
+			}
+		};
+		link.addComponent(linkImage);
 
 		//Mute
 		y -= 20;
@@ -128,12 +137,12 @@ public class HomeView extends View {
 			extras.addComponent(extrasPopup);
 			
 			Button b1 = new Button(new Rectangle(10, 17.5, 25, 65), new Color(250, 180, 50));
-			b1.setClickAction(() -> Client.getInstance().startInitiatingSpecial(Type.PinaColada));
+			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.PinaColada));
 			b1.addComponent(new Image(new Rectangle(12, 12, 70, 70), "drink.png"));
 			extrasPopup.addComponent(b1);
 			
 			b1 = new Button(new Rectangle(45, 17.5, 25, 65), new Color(50, 220, 50));
-			b1.setClickAction(() -> Client.getInstance().startInitiatingSpecial(Type.Smoko));
+			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.Smoko));
 			b1.addComponent(new Image(new Rectangle(15, 8, 70, 80), "coffee.png"));
 			extrasPopup.addComponent(b1);
 		});
@@ -149,16 +158,26 @@ public class HomeView extends View {
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
-			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Client.getIP().getHostAddress());
 			
+			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Intercom.getClient().getIP());
 			t.setActions(new Functional<String, String>() {
-				public void submit(String s) {Client.setIP(s);}
-				public String get() {return Client.getIP().getHostAddress();}
+				public void submit(String s) {Intercom.setIP(s);}
+				public String get() {return Intercom.getClient().getIP();}
 			});
-			
 			p.addPopUpComponent(t);
+			
+			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
+			cB.setActions(new Functional<Boolean, Boolean>() {
+				public void submit(Boolean b) {Intercom.setAutoDetect(b);}
+				public Boolean get() {return Intercom.isAutoDetectEnabled();}
+			});
+			p.addPopUpComponent(cB);
+			
+			Label l = new Label(new Point(15, 85), "Auto Detect", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
+			p.addPopUpComponent(l);
+			
 			p.increasePriority();
-			p.setCloseAction(() -> Client.setIP(t.getText()));
+			p.setCloseAction(() -> Intercom.setIP(t.getText()));
 			addComponent(p);
 		});
 		client.setHoverAction(() -> adjustColorHover(client, true));
@@ -169,7 +188,7 @@ public class HomeView extends View {
 		y -= 20;
 		final Button settings = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
 		sB.addComponent(settings);
-		settings.setClickAction(() -> Client.cGUI.changeView(new SettingsView()));
+		settings.setClickAction(() -> Intercom.cGUI.changeView(new SettingsView()));
 		settings.setHoverAction(() -> adjustColorHover(settings, true));
 		settings.setUnHoverAction(() -> adjustColorHover(settings, false));
 		settings.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "settings.png"));

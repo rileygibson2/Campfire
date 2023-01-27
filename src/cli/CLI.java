@@ -52,7 +52,7 @@ public class CLI {
 
 	public static void initialise() {
 		colors = new HashMap<String, Pair<String, Color>>();
-		colors.put("Client", new Pair<String, Color>(blue, new Color(0, 100, 255)));
+		colors.put("Intercom", new Pair<String, Color>(blue, new Color(0, 100, 255)));
 		colors.put("AudioManager", new Pair<String, Color>(orange, new Color(200, 255, 0)));
 		colors.put("ThreadController", new Pair<String, Color>(magenta, new Color(255, 0, 255)));
 		colors.put("Ring", new Pair<String, Color>(gray, new Color(80, 80, 80)));

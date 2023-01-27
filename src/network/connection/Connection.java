@@ -1,4 +1,4 @@
-package network;
+package network.connection;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,9 +10,12 @@ import java.net.SocketTimeoutException;
 import java.util.Arrays;
 
 import cli.CLI;
-import client.Client;
+import client.Intercom;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
+import network.managers.NetworkManager;
+import network.messages.Code;
+import network.messages.Message;
 import threads.ThreadController;
 
 public class Connection extends ThreadController {
@@ -28,14 +31,14 @@ public class Connection extends ThreadController {
 	private byte[] data;
 
 	//Incoming
-	protected Connection(Socket socket, boolean verbose) {
+	public Connection(Socket socket, boolean verbose) {
 		this.socket = socket;
 		isListening = false;
 		safelyClosed = false;
 		if (verbose) CLI.debug("Generating socket "+socket.getInetAddress().getHostAddress()+"("+socket.getLocalPort()+":"+socket.getPort()+")");
 	}
 
-	protected static Connection generate(InetAddress ip, int port, boolean verbose) throws ConnectionException {
+	public static Connection generate(InetAddress ip, int port, boolean verbose) throws ConnectionException {
 		Connection cH = null;
 		try {
 			Socket socket = new Socket();
@@ -71,7 +74,7 @@ public class Connection extends ThreadController {
 			out.write(bytes);
 		}
 		catch (IOException e) {
-			if (!Client.isShuttingdown()) CLI.error("Error trying to write bytes to output stream.");
+			if (!Intercom.isShuttingdown()) CLI.error("Error trying to write bytes to output stream.");
 			fatalError();
 		}
 		catch (ConnectionException e) {fatalError();}
@@ -123,7 +126,7 @@ public class Connection extends ThreadController {
 		CLI.debug("Carelessly writing error code");
 		writeCarelessly(new Message(Code.LocalError).formatBytes());
 		close();
-		Client.getInstance().destroyAll();
+		Intercom.getInstance().destroyAll();
 		GUI.getInstance().addMessage("An error occured with the connection", MessageBox.error);
 	}
 

@@ -9,12 +9,14 @@ import general.Rectangle;
 public class SimpleBox extends Component {
 
 	public Color col;
+	private boolean filled;
 	private boolean rounded;
 	private boolean oval;
 	private int[] roundedCorners;
 	
 	public SimpleBox(Rectangle r) {
 		super(r);
+		filled = true;
 		rounded = false;
 		oval = false;
 		setVisible(false);
@@ -23,9 +25,13 @@ public class SimpleBox extends Component {
 	public SimpleBox(Rectangle r, Color col) {
 		super(r);
 		this.col = col;
+		filled = true;
 		rounded = false;
 		oval = false;
 	}
+	
+	public void setFilled(boolean f) {filled = f;}
+	public boolean isFilled() {return filled;}
 	
 	public void setRounded(boolean r) {rounded = r;}
 	public void setRounded(int[] r) {

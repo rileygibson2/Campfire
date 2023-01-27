@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 
 import cli.CLI;
-import client.Client;
+import client.Intercom;
 import client.gui.components.Button;
 import client.gui.components.Component;
 import client.gui.components.DropDown;
@@ -78,7 +78,7 @@ public class ScreenUtils {
 		BufferedImage img = null;
 		try {img = ImageIO.read(Utils.getURL("assets/"+i.src));}
 		catch (IOException | IllegalArgumentException e) {
-			if (!Client.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
+			if (!Intercom.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
 			return;
 		}
 		if (i.getOpacity()<100) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (i.getOpacity()/100)));
@@ -90,12 +90,24 @@ public class ScreenUtils {
 		Rectangle r = b.getRealRec();
 		Color col = new Color(b.col.getRed(), b.col.getGreen(), b.col.getBlue(), percToCol(b.getOpacity()));
 		
-		if (b.isOval()) fillOval(g, col, r);
-		else if (b.isRounded()) {
-			if (b.getRoundedCorners()!=null) fillRoundRect(g, col, r, b.getRoundedCorners());
-			else fillRoundRect(g, col, r);
+		if (b.isOval()) {
+			if (b.isFilled()) fillOval(g, col, r);
+			else drawOval(g, col, r);
 		}
-		else fillRect(g, col, r);
+		else if (b.isRounded()) {
+			if (b.getRoundedCorners()!=null) {
+				if (b.isFilled()) fillRoundRect(g, col, r, b.getRoundedCorners());
+				//TODO
+			}
+			else {
+				if (b.isFilled()) fillRoundRect(g, col, r);
+				else drawRoundRect(g, col, r);
+			}
+		}
+		else {
+			if (b.isFilled()) fillRect(g, col, r); 
+			else drawRect(g, col, r); 
+		}
 	}
 
 	public void drawDataWave(Graphics2D g, CallView v, SimpleBox b) {
@@ -218,6 +230,11 @@ public class ScreenUtils {
 
 	}
 
+	public void drawRect(Graphics2D g, Color c, Rectangle r) {
+		g.setColor(c);
+		g.drawRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
+	}
+	
 	public void fillRect(Graphics2D g, Color c, Rectangle r) {
 		g.setColor(c);
 		g.fillRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
@@ -225,6 +242,11 @@ public class ScreenUtils {
 
 	public void fillRect(Graphics2D g, Rectangle r) {
 		g.fillRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
+	}
+	
+	public void drawRoundRect(Graphics2D g, Color c, Rectangle r) {
+		g.setColor(c);
+		g.drawRoundRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height), 10, 10);
 	}
 
 	public void fillRoundRect(Graphics2D g, Color c, Rectangle r) {
@@ -247,11 +269,6 @@ public class ScreenUtils {
 		if (!cor.contains(2)) g.fillRect(cW(r.x), cH(r.y+r.height*0.8), cW(r.width*0.2), cH(r.height*0.2));
 		if (!cor.contains(3)) g.fillRect(cW(r.x+r.width*0.8), cH(r.y+r.height*0.8), cW(r.width*0.2), cH(r.height*0.2));
 		if (!cor.contains(4)) g.fillRect(cW(r.x+r.width*0.8), cH(r.y), cW(r.width*0.2), cH(r.height*0.2));
-	}
-
-	public void drawRoundRect(Graphics2D g, Color c, Rectangle r) {
-		g.setColor(c);
-		g.drawRoundRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height), 10, 10);
 	}
 
 	public void drawOval(Graphics2D g, Color c, Rectangle r) {

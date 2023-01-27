@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import client.Client;
+import client.Intercom;
 
 public class ThreadController extends Thread {
 
@@ -37,29 +37,31 @@ public class ThreadController extends Thread {
 		}
 	}
 	
-	public void end() {this.stop = true;}
+	public void end() {stop = true;}
 
-	public boolean isRunning() {return !this.stop;}
+	public boolean isRunning() {return !stop;}
+	
+	public boolean isDoomed() {return stop&&!hasRun;}
 
-	public boolean hasRun() {return this.stop&&this.hasRun;}
+	public boolean hasRun() {return stop&&hasRun;}
 
 	public void setWait(int wait) {this.wait = wait;}
 	
-	public void setInitialDelay(int d) {this.initialDelay = d;}
+	public void setInitialDelay(int d) {initialDelay = d;}
 
 	public boolean hasElements() {return elements!=null;}
 
 	public Set<?> getElements() {return Collections.unmodifiableSet(elements);}
 
-	public Object getTarget() {return this.target;}
+	public Object getTarget() {return target;}
 	
-	public void setTarget(Object t) {this.target = t;}
+	public void setTarget(Object t) {target = t;}
 	
 	public void setExtras(List<Object> extras) {this.extras = extras;}
 	
-	public int getIncrement() {return this.i;}
+	public int getIncrement() {return i;}
 	
-	public void setFinishAction(Runnable r) {this.finishAction = r;}
+	public void setFinishAction(Runnable r) {finishAction = r;}
 	
 	public void setPaintOnIterate(boolean p) {iteratePaint = p;}
 
@@ -72,13 +74,13 @@ public class ThreadController extends Thread {
 	
 	public void iterate() {
 		i++;
-		if (iteratePaint) Client.cGUI.repaint();
+		if (iteratePaint) Intercom.cGUI.repaint();
 		sleep(wait);
 	}
 
 	public void finish() {
 		if (finishAction!=null) finishAction.run();
-		Client.cGUI.repaint();
+		Intercom.cGUI.repaint();
 	}
 	
 	public void sleep(int wait) {

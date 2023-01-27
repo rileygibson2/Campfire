@@ -7,7 +7,7 @@ import java.net.URL;
 import javax.sound.sampled.AudioFormat;
 
 import client.gui.GUI;
-import network.Code;
+import network.messages.Code;
 
 public class Utils {
 

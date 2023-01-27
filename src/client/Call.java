@@ -8,9 +8,9 @@ import client.gui.components.MessageBox;
 import client.gui.views.CallView;
 import client.gui.views.HomeView;
 import general.Utils;
-import network.Code;
-import network.Connection;
-import network.Message;
+import network.connection.Connection;
+import network.messages.Code;
+import network.messages.Message;
 import threads.ThreadController;
 
 public class Call {
@@ -46,7 +46,7 @@ public class Call {
 	public void start() {
 		//Deal with GUI
 		cV = new CallView();
-		Client.cGUI.changeView(cV);
+		Intercom.cGUI.changeView(cV);
 
 		//Check connection is listening
 		if (!c.isListening()) c.start();
@@ -64,7 +64,7 @@ public class Call {
 	 */
 	public void handleMicData() {
 		if (c==null) {
-			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 		c.write(data);
@@ -75,7 +75,7 @@ public class Call {
 	 */
 	public void handleData() {
 		if (c==null) {
-			if (!ended&&!Client.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 		byte[] data = c.getData();
@@ -88,13 +88,13 @@ public class Call {
 			switch (m.getCode()) {
 			case CallEnd:
 				c.write(new Message(Code.CallEndAck));
-				Client.getInstance().endCall(false);
+				Intercom.getInstance().endCall(false);
 				return;
 				
 			case LocalError:
 				c.write(new Message(Code.LocalErrorAck));
 				c.close();
-				Client.getInstance().destroyAll(); //Reset client
+				Intercom.getInstance().destroyAll(); //Reset client
 				GUI.getInstance().addMessage("There was an error with the call", MessageBox.error);
 				return;
 				
@@ -122,6 +122,6 @@ public class Call {
 		if (audio!=null) audio.end();
 		if (c!=null) c.close();
 		AudioManager.getInstance().releaseSpeakerWriter();
-		Client.cGUI.changeView(HomeView.getInstance());
+		Intercom.cGUI.changeView(HomeView.getInstance());
 	}
 }

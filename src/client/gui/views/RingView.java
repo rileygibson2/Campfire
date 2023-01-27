@@ -4,7 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 
-import client.Client;
+import client.Intercom;
 import client.gui.GUI;
 import client.gui.components.Button;
 import client.gui.components.Component;
@@ -35,14 +35,14 @@ public class RingView extends View {
 		if (recieving) {
 			cols = new Pair<>(new Color(0, 220, 50), new Color(0, 200, 100));
 			b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(89, 141, 19), new Color(112, 255, 12));
-			b.setClickAction(() -> Client.getInstance().acceptRing());
+			b.setClickAction(() -> Intercom.getInstance().acceptRing());
 			b.addComponent(new Image(new Rectangle(17.5, 25, 65, 50), "mic.png"));
 			b.pauseHover();
 		}
 		else {
 			cols = new Pair<>(new Color(220, 0, 50), new Color(200, 0, 100));
 			b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(126, 0, 14), new Color(191, 0, 9));
-			b.setClickAction(() -> Client.getInstance().cancelRing());
+			b.setClickAction(() -> Intercom.getInstance().cancelRing());
 			b.addComponent(new Image(new Rectangle(17.5, 17.5, 65, 65), "exit.png"));
 			b.freezeShadow();
 		}

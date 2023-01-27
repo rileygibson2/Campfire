@@ -1,12 +1,16 @@
-package network;
+package network.messages;
 
 public enum Code {
 	//Instantiation
 	WhoIs("i1"),
 	IAm("i2"),
 	ClientsList("i3"),
+	
 	Ping("pp"),
 	PingAck("pp-ACK"),
+	
+	Broadcast("bb"),
+	BroadcastAck("bb-ACK"),
 
 	//Calls
 	CallRequest("cR"),

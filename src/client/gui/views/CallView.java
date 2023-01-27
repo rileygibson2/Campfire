@@ -5,7 +5,7 @@ import java.awt.Graphics2D;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-import client.Client;
+import client.Intercom;
 import client.gui.GUI;
 import client.gui.components.GradientButton;
 import client.gui.components.Image;
@@ -30,7 +30,7 @@ public class CallView extends View {
 		initialiseData();
 		
 		GradientButton b = new GradientButton(new Rectangle(75, 38, 12, 24), new Color(126, 0, 14), new Color(191, 0, 9));
-		b.setClickAction(() -> Client.getInstance().endCall(true));
+		b.setClickAction(() -> Intercom.getInstance().endCall(true));
 		b.addComponent(new Image(new Rectangle(17.5, 17.5, 65, 65), "exit.png"));
 		
 		b.freezeShadow();

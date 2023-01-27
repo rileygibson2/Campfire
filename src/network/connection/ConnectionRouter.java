@@ -1,27 +1,29 @@
-package network;
+package network.connection;
 
 
 import cli.CLI;
-import client.Client;
+import client.Intercom;
 import client.Special.Type;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
 import general.Functional;
 import general.Pair;
+import network.messages.Code;
+import network.messages.Message;
 
 public class ConnectionRouter {
 	
 	Connection c;
 	Functional<Object, Pair<Connection, Message>> pingAckAction;
 	
-	protected ConnectionRouter(Connection c) {
+	public ConnectionRouter(Connection c) {
 		this.c = c;
 		c.setOnUpdate(() -> handleData());
 	}
 	
-	protected void setPingAckAction(Functional<Object, Pair<Connection, Message>> p) {pingAckAction = p;}
+	public void setPingAckAction(Functional<Object, Pair<Connection, Message>> p) {pingAckAction = p;}
 	
-	protected void start() {c.start();}
+	public void start() {c.start();}
 	
 	/**
 	 * Will check initial code and route the connection to the
@@ -40,7 +42,7 @@ public class ConnectionRouter {
 		case CallRequest:
 			CLI.debug("Routing to recieving ring");
 			c.setOnUpdate(null);
-			Client.getInstance().startRecievingRing(c);
+			Intercom.getInstance().startRecievingRing(c);
 			break;
 			
 		case SpecialRequest:
@@ -62,12 +64,12 @@ public class ConnectionRouter {
 			}
 			
 			c.setOnUpdate(null);
-			Client.getInstance().startRecievingSpecial(c, type);
+			Intercom.getInstance().startRecievingSpecial(c, type);
 			break;
 			
 		case Ping:
 			//Pass info about this clients port settings into acknowledgement
-			c.write(new Message(Code.PingAck, "ip="+Client.getIP().getHostAddress()+",cP="+Client.getConnectPort()+",lP="+Client.getListenPort()));
+			c.write(new Message(Code.PingAck, "ip="+Intercom.getClient().getIP()+",cP="+Intercom.getConnectPort()+",lP="+Intercom.getListenPort()));
 			c.close();
 			break;
 			

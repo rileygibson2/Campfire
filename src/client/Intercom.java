@@ -3,40 +3,44 @@ package client;
 import java.awt.Color;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import cli.CLI;
 import client.Special.Type;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
-import network.Code;
-import network.Connection;
-import network.ConnectionException;
-import network.Message;
-import network.NetworkManager;
+import network.Client;
+import network.connection.Connection;
+import network.connection.ConnectionException;
+import network.managers.NetworkManager;
+import network.messages.Code;
+import network.messages.Message;
 
-public class Client {
+public class Intercom {
 
-	static Client singleton;
+	static Intercom singleton;
 
 	public static GUI cGUI;
 	Ring ring;
 	Call call;
 	Special special;
 
-	private static InetAddress clientIP;
+	private static Client client;
 	private static int listenPort;
 	private static int connectPort;
+	private static int broadcastPort;
+	private static int broadcastListenPort;
+	private static boolean autoDetect;
+	
 	private static boolean shutdown;
+	private static boolean isProduction;
 
-	private Client() {
+	private Intercom() {
 		setup();
 		CLI.debug("Starting...");
 	}
 
-	public static Client getInstance() {
-		if (singleton==null) singleton = new Client();
+	public static Intercom getInstance() {
+		if (singleton==null) singleton = new Intercom();
 		return singleton;
 	}
 
@@ -208,23 +212,27 @@ public class Client {
 	public void connectionExceptionHandle(ConnectionException e) {
 		Color col = MessageBox.error;
 		String m = "";
-		if (e.getMessage().contains("Connection refused")) m = "Connection to "+getIP().getHostAddress()+":"+getConnectPort()+" refused";
+		if (e.getMessage().contains("Connection refused")) m = "Connection to "+client.getIP()+":"+getConnectPort()+" refused";
 		else if (e.getMessage().contains("Cannot call self")) m = "You cannot call yourself";
-		else if (e.getMessage().contains("Destination IP is null")) {
-			m = "Please specify the IP of the other Intercom";
+		else if (e.getMessage().contains("Client is null")) {
+			if (autoDetect) m = "No Intercoms detected at the moment";
+			else m = "Please specify the Intercom IP or turn on Auto Detect";
 			col = MessageBox.info;
 		}
+		else if (e.getMessage().contains("Client's IP is null")) m = "There was an error with the detected client's IP";
 		else if (e.getMessage().contains("Connect Port is invalid")) m = "Connecting on port "+getConnectPort()+" is not allowed";
-		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+getIP().getHostAddress()+":"+getConnectPort();
+		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+client.getIP()+":"+getConnectPort();
 		else if (e.getMessage().contains("Network is unreachable")) m = "Check your internet connection";
-		else if (e.getMessage().contains("Host is down")) m = "The host "+getIP().getHostAddress()+" is unavailable";
-		else m = "Error making connection to "+getIP().getHostAddress()+":"+getConnectPort();
+		else if (e.getMessage().contains("Host is down")) m = "The host "+client.getIP()+" is unavailable";
+		else m = "Error making connection to "+client.getIP()+":"+getConnectPort();
 
 		//Fatal errors have already been reported
 		if (!e.isFatal()) cGUI.addMessage(m, col);
 	}
 
-	public static InetAddress getIP() {return clientIP;}
+	public static void setClient(Client c) {client = c;}
+	
+	public static Client getClient() {return client;}
 
 	public static void setIP(String ip) {
 		InetAddress address = null;
@@ -235,10 +243,10 @@ public class Client {
 			return;
 		}
 
-		if (ip.equals(clientIP.getHostAddress())) return;
-		clientIP = address;
-		CLI.debug("IP set as: "+clientIP.getHostAddress());
-		cGUI.addMessage("IP set as "+clientIP.getHostAddress(), MessageBox.ok);
+		if (ip.equals(client.getIP())) return;
+		client.setAddress(address);
+		CLI.debug("IP set as: "+client.getIP());
+		cGUI.addMessage("IP set as "+client.getIP(), MessageBox.ok);
 	}
 
 	public static int getListenPort() {return listenPort;}
@@ -287,6 +295,45 @@ public class Client {
 			cGUI.addMessage("Connecting on port "+p+" is not allowed", MessageBox.error);
 		}
 	}
+	
+	public static int getBroadcastListenPort() {return broadcastListenPort;}
+
+	public static void setBroadcastListenPort(int p, boolean restart) {
+		if (p==broadcastListenPort) return;
+		if (p>1024) {
+			broadcastListenPort = p;
+			CLI.debug("Broadcast Listen Port set as: "+p);
+			cGUI.addMessage("Broadcast Listen port set as "+p, MessageBox.ok);
+			if (restart) NetworkManager.getInstance().restartBroadcastListener();
+		}
+		else {
+			CLI.error("Broadcast Listen Port not set - reserved");
+			cGUI.addMessage("Listening to broadcasts on port "+p+" is not allowed", MessageBox.error);
+		}
+	}
+	
+	public static int getBroadcastPort() {return broadcastPort;}
+
+	public static void setBroadcastPort(int p) {
+		if (p==broadcastPort) return;
+		if (p>1024) {
+			broadcastPort = p;
+			CLI.debug("Broadcast Port set as: "+p);
+			cGUI.addMessage("Broadcast port set as "+p, MessageBox.ok);
+		}
+		else {
+			CLI.error("Broadcast Port not set - reserved");
+			cGUI.addMessage("Broadcasting on port "+p+" is not allowed", MessageBox.error);
+		}
+	}
+	
+	public static boolean isAutoDetectEnabled() {return autoDetect;}
+	
+	public static void setAutoDetect(boolean a) {
+		autoDetect = a;
+		if (autoDetect) CLI.debug("Auto detect enabled");
+		else CLI.debug("Auto detect disabled");
+	}
 
 	public static boolean isShuttingdown() {return shutdown;}
 
@@ -323,28 +370,33 @@ public class Client {
 		call = null;
 		ring = null;
 
-		try {clientIP = InetAddress.getByName("127.0.0.1");}
-		catch (UnknownHostException e) {}
+		//try {client = new Client(InetAddress.getByName("127.0.0.1"));}
+		//catch (UnknownHostException e) {}
+		client = Client.nullClient;
 		listenPort = 5000;
 		connectPort = 5000;
+		broadcastListenPort = 2001;
+		broadcastPort = 2000;
+		
+		autoDetect = true;
+		isProduction = false;
 	}
-
-	public static ExecutorService getExecutor() {
-		return Executors.newSingleThreadExecutor();
-
-	}
+	
+	public static boolean isProduction() {return isProduction;}
 
 	public static void main(String[] args) throws Exception {
-		Client.getInstance();
+		Intercom.getInstance();
 
 		if (args.length==1) {
 			if (Integer.parseInt(args[0])==1) {
-				Client.setListenPort(5001, false);
-				Client.setConnectPort(5000);
+				Intercom.setListenPort(5001, false);
+				Intercom.setConnectPort(5000);
 			}
 			else {
-				Client.setListenPort(5000, false);
-				Client.setConnectPort(5001);
+				Intercom.setListenPort(5000, false);
+				Intercom.setConnectPort(5001);
+				Intercom.setBroadcastListenPort(2000, false);
+				Intercom.setBroadcastPort(2001);
 			}
 		}
 		NetworkManager.getInstance().start();

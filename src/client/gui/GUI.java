@@ -17,7 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import cli.CLI;
-import client.Client;
+import client.Intercom;
 import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
 import client.gui.views.View;
@@ -122,7 +122,7 @@ public class GUI extends JPanel {
 		if (dom.visualiserVisible()) dom.update(getView());
 	}
 
-	public static GUI initialise(Client c) {
+	public static GUI initialise(Intercom c) {
 		GUI panel = GUI.getInstance();
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
