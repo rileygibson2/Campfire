@@ -174,7 +174,7 @@ public class Connection extends ThreadController {
 			if (out!=null) out.close();
 			if (socket!=null) socket.close();
 			safelyClosed = true;
-			NetworkManager.getInstance().removeConnection(this);
+			NetworkManager.getConnectionManager().removeConnection(this);
 		} 
 		catch (IOException e) {CLI.error("Problem closing connection");}
 	}

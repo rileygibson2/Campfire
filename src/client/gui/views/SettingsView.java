@@ -20,7 +20,7 @@ import client.gui.components.DropDown;
 import client.gui.components.Image;
 import client.gui.components.Label;
 import client.gui.components.TextBox;
-import general.Functional;
+import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
 
@@ -44,7 +44,7 @@ public class SettingsView extends View {
 
 		//Actions
 		audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
-		audioIn.setActions(new Functional<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+		audioIn.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
 			public void submit(Mixer.Info s) {
 				AudioManager.getInstance().setMicLineInfo(s);
 			}
@@ -63,7 +63,7 @@ public class SettingsView extends View {
 
 		//Actions
 		audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
-		audioOut.setActions(new Functional<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+		audioOut.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
 			public void submit(Mixer.Info s) {
 				AudioManager.getInstance().setSpeakerLineInfo(s);
 			}
@@ -84,7 +84,7 @@ public class SettingsView extends View {
 		y = 12;
 		addComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
 		TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getConnectPort());
-		t.setActions(new Functional<String, String>() {
+		t.setActions(new GetterSubmitter<String, String>() {
 			public void submit(String s) {Intercom.setConnectPort(s);}
 			public String get() {return ""+Intercom.getConnectPort();}
 		});
@@ -94,7 +94,7 @@ public class SettingsView extends View {
 		y += 35;
 		addComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 18), new Color(200, 200, 200)));
 		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getListenPort());
-		t.setActions(new Functional<String, String>() {
+		t.setActions(new GetterSubmitter<String, String>() {
 			public void submit(String s) {Intercom.setListenPort(s, true);}
 			public String get() {return ""+Intercom.getListenPort();}
 		});

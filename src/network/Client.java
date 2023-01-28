@@ -13,7 +13,7 @@ public class Client {
 	boolean failedRecently; //Whether failed to connect to this client last time
 	private Instant timestamp;
 	
-	static final int timeout = 20;
+	static final int timeout = 10;
 	public final static Client nullClient = new Client(null, 0, 0);
 	
 	public Client(InetAddress address) {
@@ -43,6 +43,8 @@ public class Client {
 	
 	public int getListenPort() {return listenPort;}
 	
+	public void resetTimestamp() {timestamp = Instant.now();}
+	
 	public boolean failedRecently() {return failedRecently;}
 	
 	public void setFailedRecently(boolean f) {failedRecently = f;}
@@ -56,6 +58,7 @@ public class Client {
 		if (!(o instanceof Client)) return false;
 		Client p = (Client) o;
 		
+		if (address==null||p.address==null) return false;
 		if (address.equals(p.address)&&connectPort==p.connectPort&&listenPort==p.listenPort) {
 			return true;
 		}
@@ -67,6 +70,8 @@ public class Client {
 		LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
 		int hour = ldt.getHour();
 		int minute = ldt.getMinute();
-		return "<"+address.getHostAddress()+": Connect-"+connectPort+" Listen-"+listenPort+" Created-"+hour+":"+minute;
+		String ip = "none";
+		if (address!=null) ip = address.getHostAddress();
+		return "<"+ip+": Connect-"+connectPort+" Listen-"+listenPort+">";
 	}
 }

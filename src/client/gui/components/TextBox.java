@@ -5,12 +5,12 @@ import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
+import cli.CLI;
 import client.gui.GUI;
 import client.gui.IO;
-import general.Functional;
+import general.Getter;
+import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -22,7 +22,9 @@ public class TextBox extends Component {
 
 	private String text;
 	public Label textLabel;
-	private Functional<String, String> actions;
+	public Label descriptionLabel;
+	private GetterSubmitter<String, String> actions;
+	private Getter<String> description;
 
 	//Cursor
 	private ThreadController cursorAni;
@@ -33,20 +35,27 @@ public class TextBox extends Component {
 		super(rectangle);
 		text = initialText;
 		if (text==null) text = "";
-		textLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(200, 200, 200)); 
-		addComponent(textLabel);
-
 		cursor = "";
+		
+		textLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(200, 200, 200));
+		addComponent(textLabel);
+		descriptionLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(140, 140, 140));
+		descriptionLabel.setVisible(false);
+		addComponent(descriptionLabel);
 	}
 	
-	public void setActions(Functional<String, String> actions) {this.actions = actions;}
+	public void setActions(GetterSubmitter<String, String> actions) {this.actions = actions;}
+	
+	public void setDescriptionAction(Getter<String> d) {
+		description = d;
+		if (text.isEmpty()) {
+			descriptionLabel.text = description.get();
+			descriptionLabel.setVisible(true);
+		}
+		else descriptionLabel.setVisible(false);
+	}
 	
 	public String getText() {return text;}
-	
-	public void setText(String t) {
-		if (t==null) text = "";
-		else text = t;
-	}
 
 	@Override
 	public void doClick(Point p) {
@@ -55,7 +64,7 @@ public class TextBox extends Component {
 		
 		cursorAni = AnimationFactory.getAnimation(this, Animations.CursorBlip);
 		cursorAni.start();
-		
+		descriptionLabel.setVisible(false);
 		super.doClick(p);
 	}
 
@@ -71,6 +80,11 @@ public class TextBox extends Component {
 			text = actions.get(); //Update text
 			textLabel.text = text;
 		}
+		if (text.isEmpty()&&description!=null) {
+			descriptionLabel.text = description.get();
+			descriptionLabel.setVisible(true);
+		}
+		else descriptionLabel.setVisible(false);
 		super.doDeselect();
 	}
 	

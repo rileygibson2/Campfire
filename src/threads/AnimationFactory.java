@@ -11,6 +11,7 @@ import java.util.Set;
 import cli.CLI;
 import client.gui.components.Component;
 import client.gui.components.TextBox;
+import general.GetterSubmitter;
 import general.Pair;
 import general.Point;
 import general.Rectangle;
@@ -18,6 +19,8 @@ import general.Rectangle;
 public class AnimationFactory {
 
 	public static enum Animations {
+		//Funtionals
+		CheckCondition,
 		//Generics
 		Paint,
 		MoveTo,
@@ -51,6 +54,8 @@ public class AnimationFactory {
 		case MoveTo: return moveTo();
 		case Transform: return transform();
 		case Fade: return fade();
+		case CheckCondition: return checkCondition();
+		default: break;
 		}
 		return null;
 	}
@@ -61,6 +66,27 @@ public class AnimationFactory {
 		return startValue + (endValue - startValue) * curvedT;
 	}
 
+	//Functional animations
+	final static ThreadController checkCondition() {
+		return new ThreadController() {
+			@Override
+			public void run() {
+				doInitialDelay();
+				@SuppressWarnings("unchecked")
+				GetterSubmitter<Boolean, Boolean> gS = (GetterSubmitter<Boolean, Boolean>) getTarget();
+				
+				while (isRunning()) {
+					if (gS.get()) {
+						gS.submit(true);
+						break;
+					}
+					iterate();
+				}
+				finish();
+			}
+		};
+	}
+	
 	//Generic animations
 
 	final static ThreadController moveTo() {

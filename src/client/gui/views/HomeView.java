@@ -16,7 +16,8 @@ import client.gui.components.PopUp;
 import client.gui.components.SimpleBox;
 import client.gui.components.Slider;
 import client.gui.components.TextBox;
-import general.Functional;
+import general.Getter;
+import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
 import network.managers.NetworkManager;
@@ -71,7 +72,7 @@ public class HomeView extends View {
 			Label l = new Label(new Point(50, 50), "", new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230)) {
 				@Override
 				public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
-					if (NetworkManager.getInstance().isProbablyLinked()) text = "Currently connected";
+					if (NetworkManager.getLinkManager().isProbablyLinked()) text = "Currently connected";
 					else text = "Currently disconnected";
 					super.draw(g);
 				}
@@ -87,7 +88,7 @@ public class HomeView extends View {
 		Image linkImage = new Image(new Rectangle(23, 20, 50, 55), "") {
 			@Override
 			public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
-				if (NetworkManager.getInstance().isProbablyLinked()) src = "connected.png";
+				if (NetworkManager.getLinkManager().isProbablyLinked()) src = "connected.png";
 				else src = "disconnected.png";
 				super.draw(g);
 			}
@@ -160,14 +161,17 @@ public class HomeView extends View {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
 			
 			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Intercom.getClient().getIP());
-			t.setActions(new Functional<String, String>() {
+			t.setActions(new GetterSubmitter<String, String>() {
 				public void submit(String s) {Intercom.setIP(s);}
 				public String get() {return Intercom.getClient().getIP();}
+			});
+			t.setDescriptionAction(new Getter<String>() {
+				public String get() {return "Enter an IP";}
 			});
 			p.addPopUpComponent(t);
 			
 			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
-			cB.setActions(new Functional<Boolean, Boolean>() {
+			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
 				public void submit(Boolean b) {Intercom.setAutoDetect(b);}
 				public Boolean get() {return Intercom.isAutoDetectEnabled();}
 			});

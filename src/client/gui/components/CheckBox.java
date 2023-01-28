@@ -3,7 +3,7 @@ package client.gui.components;
 import java.awt.Color;
 
 import cli.CLI;
-import general.Functional;
+import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
 import threads.AnimationFactory;
@@ -12,7 +12,7 @@ import threads.ThreadController;
 
 public class CheckBox extends Component {
 
-	private Functional<Boolean, Boolean> actions;
+	private GetterSubmitter<Boolean, Boolean> actions;
 	private SimpleBox innerBox;
 	private Image tick;
 	private ThreadController transform;
@@ -39,7 +39,7 @@ public class CheckBox extends Component {
 		addComponent(tick);
 	}
 
-	public void setActions(Functional<Boolean, Boolean> a) {
+	public void setActions(GetterSubmitter<Boolean, Boolean> a) {
 		actions = a;
 		checked = a.get();
 		if (checked) {

@@ -78,16 +78,16 @@ public class RingView extends View {
 
 	@Override
 	public void destroy() {
-		if (pulse!=null&&pulse.isRunning()) pulse.end();
-		if (move!=null&&move.isRunning()) move.end();
-		if (fade!=null&&fade.isRunning()) fade.end();
+		if (pulse!=null&&!pulse.hasEnded()) pulse.end();
+		if (move!=null&&!move.hasEnded()) move.end();
+		if (fade!=null&&!fade.hasEnded()) fade.end();
 		super.destroy();
 	}
 
 	@Override
 	public void draw(Graphics2D g) {
 		drawComponentShadows(g);
-		if (pulse!=null&&pulse.isRunning()) { //Draw pulse animation
+		if (pulse!=null&&!pulse.hasEnded()) { //Draw pulse animation
 			GUI.getInstance().getScreenUtils().drawPulse(g, pulse);
 		}
 		drawComponents(g);

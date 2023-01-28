@@ -6,7 +6,7 @@ import client.Intercom;
 import client.Special.Type;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
-import general.Functional;
+import general.GetterSubmitter;
 import general.Pair;
 import network.messages.Code;
 import network.messages.Message;
@@ -14,14 +14,14 @@ import network.messages.Message;
 public class ConnectionRouter {
 	
 	Connection c;
-	Functional<Object, Pair<Connection, Message>> pingAckAction;
+	GetterSubmitter<Object, Pair<Connection, Message>> pingAckAction;
 	
 	public ConnectionRouter(Connection c) {
 		this.c = c;
 		c.setOnUpdate(() -> handleData());
 	}
 	
-	public void setPingAckAction(Functional<Object, Pair<Connection, Message>> p) {pingAckAction = p;}
+	public void setPingAckAction(GetterSubmitter<Object, Pair<Connection, Message>> p) {pingAckAction = p;}
 	
 	public void start() {c.start();}
 	

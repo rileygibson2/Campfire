@@ -9,7 +9,7 @@ import client.Intercom;
 public class ThreadController extends Thread {
 
 	private boolean stop;
-	private boolean hasRun; //Stops same thread attempting to run twice and throwing an error
+	private boolean hasStarted; //Stops same thread attempting to run twice and throwing an error
 	private int initialDelay;
 	private int wait = 20; //Wait for each iteration
 	private boolean iteratePaint; //Whether to paint upon iteration
@@ -23,27 +23,31 @@ public class ThreadController extends Thread {
 
 	public ThreadController() {
 		this.stop = false;
-		this.hasRun = false;
+		this.hasStarted = false;
 		initialDelay = 0;
 		iteratePaint = true;
 	}
 
 	@Override
 	public void start() {
-		if (!hasRun()) {
-			hasRun = true;
+		if (!hasStarted) {
+			hasStarted = true;
 			i = 0;
 			super.start();
 		}
 	}
 	
-	public void end() {stop = true;}
-
-	public boolean isRunning() {return !stop;}
+	//Internal use only
 	
-	public boolean isDoomed() {return stop&&!hasRun;}
-
-	public boolean hasRun() {return stop&&hasRun;}
+	protected boolean isRunning() {return !stop;} //To determine if it should continue to loop
+	 
+	//External use
+	
+	public void end() {stop = true;}
+	
+	public boolean hasEnded() {return !this.isAlive();}
+	
+	public boolean isDoomed() {return stop&&!hasEnded();}
 
 	public void setWait(int wait) {this.wait = wait;}
 	
@@ -79,6 +83,7 @@ public class ThreadController extends Thread {
 	}
 
 	public void finish() {
+		stop = true;
 		if (finishAction!=null) finishAction.run();
 		Intercom.cGUI.repaint();
 	}

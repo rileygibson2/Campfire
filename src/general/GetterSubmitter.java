@@ -1,6 +1,6 @@
 package general;
 
-public interface Functional<G, S> {
+public interface GetterSubmitter<G, S> {
 
 	public void submit(S e);
 	

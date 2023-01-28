@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import cli.CLI;
-import general.Functional;
+import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -21,7 +21,7 @@ public class DropDown<E> extends Component {
 	Map.Entry<String, E> selectedItem; //The selected item and it's name
 	private Map.Entry<String, E> noneItem =new AbstractMap.SimpleEntry<>("None", null); //A default item
 	
-	Functional<LinkedHashMap<String, E>, E> actions;
+	GetterSubmitter<LinkedHashMap<String, E>, E> actions;
 	
 	private SimpleBox topBox;
 	public Label selectedLabel; //The gui selected item component
@@ -49,7 +49,7 @@ public class DropDown<E> extends Component {
 		
 	}
 	
-	public void setActions(Functional<LinkedHashMap<String, E>, E> actions) {this.actions = actions;}
+	public void setActions(GetterSubmitter<LinkedHashMap<String, E>, E> actions) {this.actions = actions;}
 	
 	public void setSelected(Map.Entry<String, E> selected) {
 		this.selectedItem = selected;

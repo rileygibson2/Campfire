@@ -59,6 +59,9 @@ public class CLI {
 		colors.put("Call", new Pair<String, Color>(gray, new Color(0, 200, 255)));
 		colors.put("Special", new Pair<String, Color>(gray, new Color(0, 200, 255)));
 		colors.put("NetworkManager", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("ConnectionManager", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("LinkManager", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
+		colors.put("BroadcastManager", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
 		colors.put("Connection", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
 		colors.put("DOM", new Pair<String, Color>(cyan, new Color(0, 200, 255)));
 		colors.put("Console", new Pair<String, Color>(orange, new Color(200, 255, 0)));
@@ -120,7 +123,7 @@ public class CLI {
 				String c = ste.getClassName();
 
 				//Strip package name
-				return c.substring(c.indexOf(".") + 1);
+				return c.substring(c.lastIndexOf(".") + 1);
 			}
 		}
 		return null;

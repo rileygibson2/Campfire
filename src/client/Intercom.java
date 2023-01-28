@@ -72,7 +72,7 @@ public class Intercom {
 	public void startInitiatingRing() {
 		if (ring==null&&call==null&&special==null) {
 			Connection c = null;
-			try {c = NetworkManager.getInstance().generateConnection(true);}
+			try {c = NetworkManager.getConnectionManager().generateConnection(true);}
 			catch (ConnectionException e) {connectionExceptionHandle(e);}
 			if (c==null) return;
 
@@ -149,7 +149,7 @@ public class Intercom {
 	public void startInitiatingSpecial(Type type) {
 		if (ring==null&&call==null&&special==null) {
 			Connection c = null;
-			try {c = NetworkManager.getInstance().generateConnection(true);}
+			try {c = NetworkManager.getConnectionManager().generateConnection(true);}
 			catch (ConnectionException e) {connectionExceptionHandle(e);}
 			if (c==null) return;
 
@@ -219,18 +219,25 @@ public class Intercom {
 			else m = "Please specify the Intercom IP or turn on Auto Detect";
 			col = MessageBox.info;
 		}
-		else if (e.getMessage().contains("Client's IP is null")) m = "There was an error with the detected client's IP";
+		else if (e.getMessage().contains("Client's IP is null")) m = "There was an error with the client's IP";
 		else if (e.getMessage().contains("Connect Port is invalid")) m = "Connecting on port "+getConnectPort()+" is not allowed";
 		else if (e.getMessage().contains("Socket timed out")) m = "Timed out trying to connect to "+client.getIP()+":"+getConnectPort();
 		else if (e.getMessage().contains("Network is unreachable")) m = "Check your internet connection";
-		else if (e.getMessage().contains("Host is down")) m = "The host "+client.getIP()+" is unavailable";
+		else if (e.getMessage().contains("Host is down")) m = "The host "+client.getIP()+" is not running an Intercom";
 		else m = "Error making connection to "+client.getIP()+":"+getConnectPort();
 
 		//Fatal errors have already been reported
 		if (!e.isFatal()) cGUI.addMessage(m, col);
 	}
 
-	public static void setClient(Client c) {client = c;}
+	public static void setClient(Client c) {
+		if (c==null||c.equals(Client.nullClient)) {
+			CLI.error("Client not set - null");
+			return;
+		}
+		client = c;
+		CLI.debug("Client set as "+c.toString());
+	}
 	
 	public static Client getClient() {return client;}
 
@@ -265,7 +272,7 @@ public class Intercom {
 			listenPort = p;
 			CLI.debug("Listen Port set as: "+p);
 			cGUI.addMessage("Listen port set as "+p, MessageBox.ok);
-			if (restart) NetworkManager.restart();
+			if (restart) NetworkManager.getConnectionManager().restart();
 		}
 		else {
 			CLI.error("Listen Port not set - reserved");
@@ -304,7 +311,7 @@ public class Intercom {
 			broadcastListenPort = p;
 			CLI.debug("Broadcast Listen Port set as: "+p);
 			cGUI.addMessage("Broadcast Listen port set as "+p, MessageBox.ok);
-			if (restart) NetworkManager.getInstance().restartBroadcastListener();
+			if (restart) NetworkManager.getBroadcastManager().restart();
 		}
 		else {
 			CLI.error("Broadcast Listen Port not set - reserved");
@@ -331,8 +338,14 @@ public class Intercom {
 	
 	public static void setAutoDetect(boolean a) {
 		autoDetect = a;
-		if (autoDetect) CLI.debug("Auto detect enabled");
-		else CLI.debug("Auto detect disabled");
+		if (autoDetect) {
+			CLI.debug("Auto detect enabled");
+			GUI.getInstance().addMessage("Auto detect enabled", MessageBox.update);
+		}
+		else {
+			CLI.debug("Auto detect disabled");
+			GUI.getInstance().addMessage("Auto detect disabled", MessageBox.update);
+		}
 	}
 
 	public static boolean isShuttingdown() {return shutdown;}
