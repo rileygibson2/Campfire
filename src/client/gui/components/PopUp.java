@@ -10,6 +10,8 @@ public class PopUp extends Component {
 
 	private Runnable onClose;
 	SimpleBox mainBox;
+	Button close;
+	Button accept;
 
 	public PopUp(String label, Point p) {
 		super(new Rectangle((100-p.x)/2, (100-p.y)/2, p.x, p.y));
@@ -32,24 +34,37 @@ public class PopUp extends Component {
 		tB.setRounded(new int[]{1, 4});
 		mainBox.addComponent(tB);
 
+		//Top label
 		Label l = new Label(new Point(50, 50), label, new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230));
 		l.setCentered(true);
 		tB.addComponent(l);
 
-		Button b = new Button(new Rectangle(getX()+getWidth()*0.70, getY()+getHeight()*0.75, 5, 10), new Color(100, 100, 100));
-		b.setAbsolute(true);
-		b.setClickAction(() -> close(false));
-		b.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
-		mainBox.addComponent(b);
+		//Exit button
+		close = new Button(new Rectangle(getX()+getWidth()*0.70, getY()+getHeight()*0.75, 5, 10), new Color(100, 100, 100));
+		close.setAbsolute(true);
+		close.setClickAction(() -> close(false));
+		close.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
+		mainBox.addComponent(close);
 
-		b = new Button(new Rectangle(getX()+getWidth()*0.85, getY()+getHeight()*0.75, 5, 10), new Color(100, 200, 100));
-		b.setAbsolute(true);
-		b.setClickAction(() -> close(true));
-		b.addComponent(new Image(new Rectangle(25, 25, 50, 50), "ok.png"));
-		mainBox.addComponent(b);
+		//Accept button
+		accept = new Button(new Rectangle(getX()+getWidth()*0.85, getY()+getHeight()*0.75, 5, 10), new Color(100, 200, 100));
+		accept.setAbsolute(true);
+		accept.setClickAction(() -> close(true));
+		accept.addComponent(new Image(new Rectangle(25, 25, 50, 50), "ok.png"));
+		mainBox.addComponent(accept);
 	}
 
 	public void setCloseAction(Runnable r) {this.onClose = r;}
+	
+	public void setCloseButtonPos(double x, double y) {
+		close.setX(x);
+		close.setY(y);
+	}
+	
+	public void setAcceptButtonPos(double x, double y) {
+		accept.setX(x);
+		accept.setY(y);
+	}
 
 	//So components get added to the main box not to the popup which is essentially a wrapper
 	public void addPopUpComponent(Component c) {

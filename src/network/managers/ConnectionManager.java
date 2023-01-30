@@ -54,10 +54,11 @@ public class ConnectionManager extends AbstractManager {
 					}
 				}
 				catch (IOException e) {
-					if (shutdown||Intercom.isShuttingdown()) return;
-					fatalError("There was a problem with the connection listener - "+e.getMessage(), true);
+					if (!shutdown&&!Intercom.isShuttingdown()) {
+						fatalError("There was a problem with the connection listener - "+e.getMessage(), true);
+					}
 				}
-				shutdown();
+				finally {shutdown();}
 			}
 		};
 		
@@ -107,6 +108,7 @@ public class ConnectionManager extends AbstractManager {
 	@Override
 	public void shutdown() {
 		if (shutdown) return;
+		super.shutdown();
 		if (server!=null) server.end();
 		for (Connection c : new HashSet<>(connections)) c.close(); //Uses copy to avoid concurrent modification, as connections remove themselves from the set when closing
 		try {
@@ -114,6 +116,5 @@ public class ConnectionManager extends AbstractManager {
 		}
 		catch (IOException e) {CLI.error("Problem shutting down ConnectionManager");}
 		CLI.debug("Shutdown");
-		super.shutdown();
 	}
 }

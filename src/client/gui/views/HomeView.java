@@ -3,12 +3,18 @@ package client.gui.views;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.util.LinkedHashMap;
+
+import javax.sound.sampled.Line;
+import javax.sound.sampled.Mixer;
+import javax.sound.sampled.Mixer.Info;
 
 import client.AudioManager;
 import client.Intercom;
 import client.Special.Type;
 import client.gui.components.Button;
 import client.gui.components.CheckBox;
+import client.gui.components.DropDown;
 import client.gui.components.GradientButton;
 import client.gui.components.Image;
 import client.gui.components.Label;
@@ -25,16 +31,20 @@ import network.managers.NetworkManager;
 public class HomeView extends View {
 
 	protected static HomeView singleton;
-	
+
 	SimpleBox extrasPopup;
 	Slider volumeSlider;
 	public Image linkImage;
+
+	DropDown<Mixer.Info> audioIn;
+	DropDown<Mixer.Info> audioOut;
+	DropDown<Line.Info> remote;
 
 	private HomeView() {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
 
 		//Main label
-		addComponent(new Label(new Point(79, 88.5), "RileyCom", new Font("Geneva", Font.ROMAN_BASELINE, 20), new Color(230, 230, 230)));
+		addComponent(new Label(new Point(79, 88.5), "Campfire", new Font("Geneva", Font.ROMAN_BASELINE, 20), new Color(230, 230, 230)));
 		addComponent(new Image(new Rectangle(69, 81, 10, 15), "icon.png"));
 
 		//Xbox buttons
@@ -84,7 +94,7 @@ public class HomeView extends View {
 		});
 		link.setHoverAction(() -> adjustColorHover(link, true));
 		link.setUnHoverAction(() -> adjustColorHover(link, false));
-		
+
 		Image linkImage = new Image(new Rectangle(23, 20, 50, 55), "") {
 			@Override
 			public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
@@ -107,7 +117,7 @@ public class HomeView extends View {
 				AudioManager aM = AudioManager.getInstance();
 				aM.setVolume(volumeSlider.getValue());
 				Image i = (Image) mute.getComponents(Image.class).get(0);
-				
+
 				if (aM.getVolume()<5) {
 					aM.setVolume(0);
 					mute.col = new Color(200, 100, 100);
@@ -136,12 +146,12 @@ public class HomeView extends View {
 			extrasPopup = new SimpleBox(new Rectangle(100, 10, 200, 80), new Color(70, 70, 70));
 			extrasPopup.setRounded(new int[] {3, 4});
 			extras.addComponent(extrasPopup);
-			
+
 			Button b1 = new Button(new Rectangle(10, 17.5, 25, 65), new Color(250, 180, 50));
 			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.PinaColada));
 			b1.addComponent(new Image(new Rectangle(12, 12, 70, 70), "drink.png"));
 			extrasPopup.addComponent(b1);
-			
+
 			b1 = new Button(new Rectangle(45, 17.5, 25, 65), new Color(50, 220, 50));
 			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.Smoko));
 			b1.addComponent(new Image(new Rectangle(15, 8, 70, 80), "coffee.png"));
@@ -159,7 +169,7 @@ public class HomeView extends View {
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
-			
+
 			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Intercom.getClient().getIP());
 			t.setActions(new GetterSubmitter<String, String>() {
 				public void submit(String s) {Intercom.setIP(s);}
@@ -169,17 +179,17 @@ public class HomeView extends View {
 				public String get() {return "Enter an IP";}
 			});
 			p.addPopUpComponent(t);
-			
+
 			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
 			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
 				public void submit(Boolean b) {Intercom.setAutoDetect(b);}
 				public Boolean get() {return Intercom.isAutoDetectEnabled();}
 			});
 			p.addPopUpComponent(cB);
-			
+
 			Label l = new Label(new Point(15, 85), "Auto Detect", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
 			p.addPopUpComponent(l);
-			
+
 			p.increasePriority();
 			p.setCloseAction(() -> Intercom.setIP(t.getText()));
 			addComponent(p);
@@ -192,7 +202,8 @@ public class HomeView extends View {
 		y -= 20;
 		final Button settings = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
 		sB.addComponent(settings);
-		settings.setClickAction(() -> Intercom.cGUI.changeView(new SettingsView()));
+		createSettings(settings);
+		//settings.setClickAction(() -> Intercom.cGUI.changeView(new SettingsView()));
 		settings.setHoverAction(() -> adjustColorHover(settings, true));
 		settings.setUnHoverAction(() -> adjustColorHover(settings, false));
 		settings.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "settings.png"));
@@ -202,6 +213,79 @@ public class HomeView extends View {
 		if (singleton==null) singleton = new HomeView();
 		return singleton;
 	};
+
+	public void createSettings(Button settings) {
+		settings.setClickAction(() -> {
+			PopUp p = new PopUp("Settings", new Point(80, 80));
+
+			int x = 6;
+			int y = 25;
+
+			//Audio input dropdown
+			p.addPopUpComponent(new Label(new Point(x, y), "Microphone", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			audioIn = new DropDown<>(new Rectangle(x, y+6, 40, 15));
+			audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+			p.addPopUpComponent(audioIn);
+
+			//Actions
+			audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
+			audioIn.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+				public void submit(Mixer.Info s) {
+					AudioManager.getInstance().setMicLineInfo(s);
+				}
+
+				public LinkedHashMap<String, Info> get() {
+					return AudioManager.getInstance().listMicrophones();
+				}
+			});
+
+			//Audio output dropdown
+			y += 30;
+			p.addPopUpComponent(new Label(new Point(x, y), "Speaker", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			audioOut = new DropDown<Mixer.Info>(new Rectangle(x, y+6, 40, 15));
+			audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+			p.addPopUpComponent(audioOut);
+
+			//Actions
+			audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
+			audioOut.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+				public void submit(Mixer.Info s) {
+					AudioManager.getInstance().setSpeakerLineInfo(s);
+				}
+
+				public LinkedHashMap<String, Info> get() {
+					return AudioManager.getInstance().listSpeakers();
+				}
+			});
+
+			//Connect port textbox
+			x = 55;
+			y = 25;
+			p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getConnectPort());
+			t.setActions(new GetterSubmitter<String, String>() {
+				public void submit(String s) {Intercom.setConnectPort(s);}
+				public String get() {return ""+Intercom.getConnectPort();}
+			});
+			p.addPopUpComponent(t);
+
+			//Listen port textbox
+			y += 30;
+			p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getListenPort());
+			t.setActions(new GetterSubmitter<String, String>() {
+				public void submit(String s) {Intercom.setListenPort(s, true);}
+				public String get() {return ""+Intercom.getListenPort();}
+			});
+			p.addPopUpComponent(t);
+			
+			//Finish up
+			p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
+			p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
+			p.increasePriority();
+			addComponent(p);
+		});
+	}
 
 	public void adjustColorHover(Button b, boolean hoverOn) {
 		Color c = b.col;

@@ -138,6 +138,7 @@ public class LinkManager extends AbstractManager {
 	@Override
 	public void shutdown() {
 		if (shutdown) return;
+		super.shutdown();
 		if (checker!=null) checker.hasEnded();
 		CLI.debug("Shutdown");
 		super.shutdown();

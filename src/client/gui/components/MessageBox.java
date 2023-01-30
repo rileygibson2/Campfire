@@ -3,7 +3,10 @@ package client.gui.components;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.List;
 
+import cli.CLI;
 import client.gui.GUI;
 import general.Point;
 import general.Rectangle;
@@ -50,6 +53,17 @@ public class MessageBox extends Component {
 		mainBox.addComponent(label);
 		
 		setOpacity(0);
+	}
+	
+	public void updateGoal(double goalY) {
+		List<Object> extras = new ArrayList<>();
+		extras.add(new Point(getX(), goalY));
+		
+		if (move!=null&&!move.isDoomed()) move.setExtras(extras);
+		else {
+			move = AnimationFactory.getAnimation(this, Animations.MoveTo, new Point(getX(), goalY));
+			move.start();
+		}
 	}
 
 	@Override

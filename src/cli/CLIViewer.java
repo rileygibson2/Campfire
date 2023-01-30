@@ -23,7 +23,7 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 
 	private static final long serialVersionUID = 8826256830984099915L;
 	protected static JFrame frame;
-	private static Rectangle screen = new Rectangle(0, 0, 400, 400);
+	private static Rectangle screen = new Rectangle(0, 0, 700, 400);
 
 	private ScreenUtils screenUtils;
 	private boolean isActive;
@@ -101,12 +101,12 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 			String header = m.formatHeader();
 			double hP = screenUtils.getStringWidthAsPerc(g2, f, header);
 
-			screenUtils.drawStringFromPoint(g2, f, header, m.color, new Point(xAdj, y));
-			screenUtils.drawStringFromPoint(g2, f, " "+m.message, Color.GREEN, new Point(hP+xAdj, y));
-
 			//Update maxWidth
 			double w = screenUtils.getStringWidthAsPerc(g2, f, header+ " "+m.message);
 			if (w>maxWidth) maxWidth = w;
+
+			screenUtils.drawStringFromPoint(g2, f, header, m.color, new Point(xAdj, y));
+			screenUtils.drawStringFromPoint(g2, f, " "+m.message, Color.GREEN, new Point(hP+xAdj, y));
 
 			y += screenUtils.getStringHeightAsPerc(g2, f);
 		}

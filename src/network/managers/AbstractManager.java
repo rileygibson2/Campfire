@@ -33,11 +33,15 @@ public abstract class AbstractManager {
 		GetterSubmitter<Boolean, Boolean> gS = new GetterSubmitter<>() {
 			public Boolean get() {return hasShutdown();}
 			public void submit(Boolean e) {
+				CLI.debug("Restarting..");
+				shutdown = false;
+				fatalError = false;
+				fatalErrorMessage = "";
 				start();
 			}
 		};
-		AnimationFactory.getAnimation(gS, Animations.CheckCondition).start();
 		shutdown();
+		AnimationFactory.getAnimation(gS, Animations.CheckCondition).start();
 	}
 	
 	public void setFatalErrorAction(Runnable r) {fatalErrorAction = r;}

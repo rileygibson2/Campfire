@@ -24,13 +24,9 @@ public class NetworkManager extends AbstractManager {
 
 	private NetworkManager() {
 		super();
-		
 		linkManager = new LinkManager();
 		broadcastManager = new BroadcastManager();
 		connectionManager = new ConnectionManager();
-		connectionManager.setFatalErrorAction(() -> {
-			
-		});
 		
 		buildLocalAddresses();
 	}

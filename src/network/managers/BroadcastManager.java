@@ -206,6 +206,7 @@ public class BroadcastManager extends AbstractManager {
 	@Override
 	public void shutdown() {
 		if (shutdown) return;
+		super.shutdown();
 		if (writer!=null) writer.end();
 		if (listener!=null) listener.end();
 		if (cleaner!=null) cleaner.end();

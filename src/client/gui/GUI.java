@@ -63,7 +63,7 @@ public class GUI extends JPanel {
 	
 	public void addMessage(String message, Color col) {
 		//Find y position message should animate to
-		double goalY = messages.size()*12+5;
+		double goalY = messages.size()*12.5+5;
 		int hold = 2000;
 		if (col.equals(MessageBox.error)) hold = 4000;
 		
@@ -72,7 +72,14 @@ public class GUI extends JPanel {
 		HomeView.getInstance().addComponent(m);
 	}
 	
-	public void removeMessage(MessageBox m) {messages.remove(m);}
+	public void removeMessage(MessageBox m) {
+		messages.remove(m);
+		
+		//Update position of all other messages
+//		for (int i=0; i<messages.size(); i++) {
+//			messages.get(i).updateGoal((i*12.5)+5);
+//		}
+	}
 	
 	public ScreenUtils getScreenUtils() {return screenUtils;}
 	
@@ -134,7 +141,7 @@ public class GUI extends JPanel {
 
 				//Label and build
 				//frame.setTitle("RileyCom - "+c.name);
-				frame.setTitle("RileyCom");
+				frame.setTitle("Campfire");
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 				//Finish up
