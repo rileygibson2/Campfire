@@ -140,7 +140,6 @@ public class GUI extends JPanel {
 				frame.getContentPane().add(panel);
 
 				//Label and build
-				//frame.setTitle("RileyCom - "+c.name);
 				frame.setTitle("Campfire");
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
