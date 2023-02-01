@@ -1,7 +1,5 @@
 package client.gui.components;
 
-import java.awt.Color;
-
 import client.gui.GUI;
 import general.GetterSubmitter;
 import general.Point;

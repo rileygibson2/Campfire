@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import cli.CLI;
 import client.gui.GUI;
 import general.GetterSubmitter;
 import general.Point;

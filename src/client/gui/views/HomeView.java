@@ -172,7 +172,7 @@ public class HomeView extends View {
 					aM.mute();
 				}
 				else {
-					mute.col = new Color(100, 100, 100);
+					mute.col = GUI.fg;
 					i.src = "unmuted.png";
 					aM.unmute();
 				}
