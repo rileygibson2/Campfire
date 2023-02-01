@@ -10,7 +10,7 @@ import java.net.SocketTimeoutException;
 import java.util.Arrays;
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
 import network.managers.NetworkManager;
@@ -74,7 +74,7 @@ public class Connection extends ThreadController {
 			out.write(bytes);
 		}
 		catch (IOException e) {
-			if (!Intercom.isShuttingdown()) CLI.error("Error trying to write bytes to output stream.");
+			if (!Campfire.isShuttingdown()) CLI.error("Error trying to write bytes to output stream.");
 			fatalError();
 		}
 		catch (ConnectionException e) {fatalError();}
@@ -126,7 +126,7 @@ public class Connection extends ThreadController {
 		CLI.debug("Carelessly writing error code");
 		writeCarelessly(new Message(Code.LocalError).formatBytes());
 		close();
-		Intercom.getInstance().destroyAll();
+		Campfire.getInstance().destroyAll();
 		GUI.getInstance().addMessage("An error occured with the connection", MessageBox.error);
 	}
 

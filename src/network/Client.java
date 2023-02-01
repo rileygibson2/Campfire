@@ -2,8 +2,6 @@ package network;
 
 import java.net.InetAddress;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 
 public class Client {
 
@@ -67,9 +65,6 @@ public class Client {
 	
 	@Override
 	public String toString() {
-		LocalDateTime ldt = LocalDateTime.ofInstant(timestamp, ZoneId.of("UTC"));
-		int hour = ldt.getHour();
-		int minute = ldt.getMinute();
 		String ip = "none";
 		if (address!=null) ip = address.getHostAddress();
 		return "<"+ip+": Connect-"+connectPort+" Listen-"+listenPort+">";

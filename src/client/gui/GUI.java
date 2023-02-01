@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -16,8 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 import client.gui.components.MessageBox;
 import client.gui.views.HomeView;
 import client.gui.views.View;
@@ -38,12 +38,20 @@ public class GUI extends JPanel {
 	private List<MessageBox> messages;
 	
 	DOM dom;
+	
+	//Styles
+	public final static Color bg = new Color(15, 15, 15);
+	public final static Color fg = new Color(50, 50, 50);
+	public final static Color focus = new Color(70, 70, 70);
+	public final static Color focus2 = new Color(90, 90, 90);
+	private boolean antiAlias;
 
 	private GUI() {
 		io = IO.getInstance();
 		dom = new DOM();
 		screenUtils = new ScreenUtils(screen);
 		messages = new ArrayList<MessageBox>();
+		antiAlias = false;
 		
 		setFocusable(true);
 		setFocusTraversalKeysEnabled(false);
@@ -94,42 +102,19 @@ public class GUI extends JPanel {
 		repaint();
 	}
 	
-	public void createCallDialog(String name) {
-		 // Create a dialog with "Accept" and "Decline" buttons
-       JDialog dialog = new JDialog(frame, "Incoming Call", true);
-       dialog.setLayout(new FlowLayout());
-       JLabel label = new JLabel("Incoming call from "+name);
-       dialog.add(label);
-       JButton acceptButton = new JButton("Accept");
-       JButton declineButton = new JButton("Decline");
-       dialog.add(acceptButton);
-       dialog.add(declineButton);
-       dialog.pack();
-
-       // Add an action listener to the "Accept" button
-       acceptButton.addActionListener(new ActionListener() {
-           public void actionPerformed(ActionEvent e) {
-               System.out.println("Accept pressed!!!!");
-               dialog.dispose();
-           }
-       });
-       // Add an action listener to the "Decline" button
-       declineButton.addActionListener(new ActionListener() {
-           public void actionPerformed(ActionEvent e) {
-               dialog.dispose();
-           }
-       });
-       dialog.setVisible(true);
-	}
+	public void setAntiAliasing(boolean a) {antiAlias = a;}
+	
+	public boolean getAntiAliasing() {return antiAlias;}
 	
 	@Override
 	public void paintComponent(Graphics g) {
+		if (antiAlias) ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		screenUtils.drawBase((Graphics2D) g);
 		view.draw((Graphics2D) g);
 		if (dom.visualiserVisible()) dom.update(getView());
 	}
 
-	public static GUI initialise(Intercom c) {
+	public static GUI initialise(Campfire c) {
 		GUI panel = GUI.getInstance();
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {

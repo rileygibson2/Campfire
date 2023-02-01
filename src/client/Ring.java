@@ -67,7 +67,7 @@ public class Ring {
 		}
 
 		//Deal with view and audio
-		Intercom.cGUI.changeView(new RingView(recieving));
+		Campfire.cGUI.changeView(new RingView(recieving));
 		audio = AudioManager.getInstance().getSoundWriter(path, true);
 		audio.start();
 	}
@@ -77,7 +77,7 @@ public class Ring {
 	 */
 	public void accept() {
 		if (c==null) {
-			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Campfire.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 		c.write(new Message(Code.CallAccept));
@@ -111,7 +111,7 @@ public class Ring {
 
 	public void handleData() {
 		if (c==null) {
-			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Campfire.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 
@@ -137,37 +137,37 @@ public class Ring {
 			//Ack the accept and move into call state
 			if (writer!=null) writer.end();
 			c.write(new Message(Code.CallAcceptAck));
-			Intercom.getInstance().startCall();
+			Campfire.getInstance().startCall();
 			break;
 
 		case CallAcceptAck:
 			//Recieved ack so move into call state
-			Intercom.getInstance().startCall();
+			Campfire.getInstance().startCall();
 			break;
 
 		case CallRequestCancel:
 			//Stop this ring, show cancel message saying initiator cancelled and stop ring
 			c.write(new Message(Code.CallRequestCancelAck));
-			Intercom.getInstance().cancelRing(); //Reset client's ring object
+			Campfire.getInstance().cancelRing(); //Reset client's ring object
 			break;
 
 		case CallDecline:
 			//Stop this ring, show decline message saying reciever declined and stop ring
 			c.write(new Message(Code.CallDeclineAck));
-			Intercom.getInstance().declineRing();
+			Campfire.getInstance().declineRing();
 			break;
 
 		case RequestedClientBusy:
 			//Stop this ring, show busy message saying reciever is busy and stop ring
 			c.write(new Message(Code.RequestedClientBusyAck));
-			Intercom.getInstance().destroyAll(); //Reset client's ring object
+			Campfire.getInstance().destroyAll(); //Reset client's ring object
 			GUI.getInstance().addMessage("The client is busy", MessageBox.info);
 			break;
 
 		case LocalError:
 			c.write(new Message(Code.LocalErrorAck));
 			c.close();
-			Intercom.getInstance().destroyAll(); //Reset client
+			Campfire.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("There was an error with the ring", MessageBox.error);
 			break;
 
@@ -185,6 +185,6 @@ public class Ring {
 		if (audio!=null) audio.end();
 		if (writer!=null) writer.end();
 		if (c!=null) c.close();
-		Intercom.cGUI.changeView(HomeView.getInstance());
+		Campfire.cGUI.changeView(HomeView.getInstance());
 	}
 }

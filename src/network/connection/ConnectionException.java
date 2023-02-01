@@ -1,7 +1,7 @@
 package network.connection;
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 
 public class ConnectionException extends Exception {
 	private static final long serialVersionUID = 1L;
@@ -10,12 +10,12 @@ public class ConnectionException extends Exception {
 	
 	public ConnectionException(String message) {
 		super(message);
-		if (!Intercom.isShuttingdown()) CLI.error("ConnectionException: "+message);
+		if (!Campfire.isShuttingdown()) CLI.error("ConnectionException: "+message);
 	}
 	
 	public ConnectionException(String message, boolean verbose) {
 		super(message);
-		if (verbose&&!Intercom.isShuttingdown()) CLI.error("ConnectionException: "+message);
+		if (verbose&&!Campfire.isShuttingdown()) CLI.error("ConnectionException: "+message);
 	}
 	
 	/**

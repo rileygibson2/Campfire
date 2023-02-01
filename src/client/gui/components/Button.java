@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Graphics2D;
 
-import client.gui.GUI;
 import general.Point;
 import general.Rectangle;
 import general.Utils;
@@ -14,16 +13,28 @@ import threads.ThreadController;
 
 public class Button extends Component {
 
-	public Color col;
-	public ThreadController hover;
-	public ThreadController unHover;
-	public boolean drawBox;
+	private ThreadController hover;
+	private ThreadController unHover;
+	public SimpleBox mainBox;
 
 	public Button(Rectangle r, Color col) {
 		super(r);
-		this.col = col;
-		drawBox = true;
+		mainBox = new SimpleBox(new Rectangle(0, 0, 100, 100), col);
+		mainBox.setRounded(true);
+		addComponent(mainBox);
 	}
+	
+	public void addButtonComponent(Component c) {
+		mainBox.addComponent(c);
+	}
+	
+	public Color getColor() {return mainBox.col;}
+	
+	public void setColor(Color col) {
+		mainBox.col = col;
+	}
+	
+	public void setOval(boolean o) {mainBox.setOval(o);}
 
 	@Override
 	public void doClick(Point p) {
@@ -65,7 +76,6 @@ public class Button extends Component {
 
 	@Override
 	public void draw(Graphics2D g) {
-		if (drawBox) GUI.getInstance().getScreenUtils().drawButton(g, this);
 		super.draw(g);
 	}
 }

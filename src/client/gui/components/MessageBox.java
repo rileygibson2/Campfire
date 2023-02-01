@@ -6,7 +6,6 @@ import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import cli.CLI;
 import client.gui.GUI;
 import general.Point;
 import general.Rectangle;
@@ -18,7 +17,8 @@ public class MessageBox extends Component {
 
 	public static Color error = new Color(220, 100, 100);
 	public static Color ok = new Color(100, 200, 100);
-	public static Color info = new Color(80, 80, 80);
+	//public static Color info = new Color(80, 80, 80);
+	public static Color info = GUI.focus;
 	public static Color update = new Color(100, 100, 200);
 	
 	private SimpleBox mainBox;

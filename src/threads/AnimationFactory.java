@@ -194,6 +194,7 @@ public class AnimationFactory {
 		return new ThreadController() {
 			@Override
 			public void run() {
+				setWait(40);
 				doInitialDelay();
 				elements = new HashSet<Object>(); //One point for each pulse, x is opacity, y is rad
 
@@ -202,7 +203,7 @@ public class AnimationFactory {
 					Pair<Color, Color> cols = (Pair<Color, Color>) extras.get(0);
 
 					//Add new bubbles
-					if (((getIncrement()-62)/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), cols.a));
+					if (((getIncrement()-65)/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), cols.a));
 					if ((getIncrement()/70d)%1==0) elements.add(new Pair<Point, Color>(new Point(50, 1), cols.b));
 
 					Set<Object> toRemove = new HashSet<>();
@@ -210,9 +211,9 @@ public class AnimationFactory {
 						@SuppressWarnings("unchecked")
 						Pair<Point, Color> pa = (Pair<Point, Color>) o;
 						Point p = pa.a;
-						p.y += 0.1; //Expand bubble
-						if (p.x>0) p.x--; //Lower opacity
-						else toRemove.add(o);
+						p.y += 0.2; //Expand bubble
+						p.x-= 1.8; //Lower opacity
+						if (p.x<0) toRemove.add(o);
 					}
 					elements.removeAll(toRemove); //Remove invisible bubbles
 

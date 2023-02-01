@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.GradientPaint;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.RadialGradientPaint;
 import java.awt.Stroke;
@@ -21,10 +22,8 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 
 import cli.CLI;
-import client.Intercom;
-import client.gui.components.Button;
+import client.Campfire;
 import client.gui.components.Component;
-import client.gui.components.DropDown;
 import client.gui.components.GradientButton;
 import client.gui.components.Image;
 import client.gui.components.Label;
@@ -40,15 +39,22 @@ import threads.ThreadController;
 public class ScreenUtils {
 
 	private Rectangle screen;
-	static Color bg = new Color(20, 20, 20);
-	//g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 	public ScreenUtils(Rectangle screen) {
 		this.screen = screen;
+		loadFonts();
+	}
+	
+	public void loadFonts() {
+        try {
+            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric.ttf")));
+            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric-bold.ttf")));
+        } catch (Exception e) {CLI.error("Error loading fonts - "+e.getMessage());}
 	}
 	
 	public void drawBase(Graphics2D g) {
-		fillRect(g, bg, new Rectangle(0, 0, 100, 100));
+		fillRect(g, GUI.bg, new Rectangle(0, 0, 100, 100));
 	}
 
 	public void drawLabel(Graphics2D g, Label l) {
@@ -60,16 +66,11 @@ public class ScreenUtils {
 		else drawStringFromPoint(g, l.font, l.text, col, new Point(r.x, r.y));
 	}
 
-	public void drawButton(Graphics2D g, Button b) {
-		Rectangle r = b.getRealRec();
-		fillRoundRect(g, b.col, r);
-	}
-
 	public void drawTextBox(Graphics2D g, TextBox t) {
 		Rectangle r = t.getRealRec();
 
-		fillRoundRect(g, new Color(100, 100, 100), r); //Main box
-		if (t.isSelected()) drawRoundRect(g, new Color(120, 120, 120), r); //Highlight
+		fillRoundRect(g, GUI.focus, r); //Main box
+		if (t.isSelected()) drawRoundRect(g, GUI.focus2, r); //Highlight
 	}
 
 	public void drawImage(Graphics2D g, Image i) {
@@ -78,17 +79,21 @@ public class ScreenUtils {
 		BufferedImage img = null;
 		try {img = ImageIO.read(Utils.getURL("assets/"+i.src));}
 		catch (IOException | IllegalArgumentException e) {
-			if (!Intercom.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
+			if (!Campfire.isShuttingdown()) CLI.error("ImageIO failed for assets/"+i.src);
 			return;
 		}
 		if (i.getOpacity()<100) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (i.getOpacity()/100)));
 		
 		g.drawImage(img, cW(r.x), cH(r.y), cW(r.width), cH(r.height), null);
+		
+		//Reset alpha
+		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 	}
 	
 	public void drawSimpleBox(Graphics2D g, SimpleBox b) {
 		Rectangle r = b.getRealRec();
 		Color col = new Color(b.col.getRed(), b.col.getGreen(), b.col.getBlue(), percToCol(b.getOpacity()));
+		if (b.col.getAlpha()==0) return; //Duck tape fix as this method does net respect the boxe's alpha channel
 		
 		if (b.isOval()) {
 			if (b.isFilled()) fillOval(g, col, r);
@@ -114,10 +119,8 @@ public class ScreenUtils {
 		Rectangle r = b.getRealRec();
 
 		//Gradient
-		Color start = new Color(60, 60, 60, 255);
-		Color end = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 0);
-		//start = Color.RED;
-		//end = Color.BLUE;
+		Color start = new Color(40, 40, 40, 255);
+		Color end = new Color(GUI.bg.getRed(), GUI.bg.getGreen(), GUI.bg.getBlue(), 0);
 		setGradientRadial(g, start, end, new float[]{0f, 1f}, new Rectangle(r.x-r.width*0.2, r.y, r.width*1.4, r.height));
 		fillRect(g, new Rectangle(r.x, r.y, r.width+5, r.height));
 
@@ -220,8 +223,8 @@ public class ScreenUtils {
 
 	public void drawShadow(Graphics2D g, Component c) {
 		Rectangle r = c.getRealRec(c.getShadowRec());
-		Color start = new Color(80, 80, 80, 255);
-		Color end = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 0);
+		Color start = new Color(70, 70, 70, 255);
+		Color end = new Color(GUI.bg.getRed(), GUI.bg.getGreen(), GUI.bg.getBlue(), 0);
 
 		double size = 1;
 		Rectangle r1 = new Rectangle(r.x-(r.width*(size/2)), r.y-(r.height*(size/2)), r.width*(size+1), r.height*(size+1));
@@ -340,7 +343,10 @@ public class ScreenUtils {
 	}
 
 	public int percToCol(double p) {
-		return (int) ((p/100)*255);
+		int c = (int) ((p/100)*255);
+		if (c>255) c = 255;
+		if (c<0) c = 0;
+		return c;
 	}
 
 	/**

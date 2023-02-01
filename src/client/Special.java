@@ -69,7 +69,7 @@ public class Special {
 			writer.start();
 		}
 		else { //Recieving should start immediatly while sender has to wait for ack
-			Intercom.cGUI.changeView(new SpecialView(type, recieving));
+			Campfire.cGUI.changeView(new SpecialView(type, recieving));
 			startAudio();
 		}
 	}
@@ -87,7 +87,7 @@ public class Special {
 
 	public void handleData() {
 		if (c==null) {
-			if (!ended&&!Intercom.isShuttingdown()) CLI.error("Connection unexpectedly became null");
+			if (!ended&&!Campfire.isShuttingdown()) CLI.error("Connection unexpectedly became null");
 			return;
 		}
 
@@ -108,27 +108,27 @@ public class Special {
 			//Client has acked so don't need to send request anymore
 			if (writer!=null) writer.end();
 			if (!recieving) {
-				Intercom.cGUI.changeView(new SpecialView(type, recieving));
+				Campfire.cGUI.changeView(new SpecialView(type, recieving));
 				startAudio();
 			}
 			break;
 
 		case SpecialEnd:
 			c.write(new Message(Code.SpecialEndAck));
-			Intercom.getInstance().endSpecial(false);
+			Campfire.getInstance().endSpecial(false);
 			break;
 			
 		case InvalidSpecialType:
 			//Special type was computed as invalid on the other end
 			c.write(new Message(Code.InvalidSpecialTypeAck));
-			Intercom.getInstance().destroyAll(); //Reset client
+			Campfire.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("The special type was invalid", MessageBox.error);
 			break;
 
 		case LocalError:
 			c.write(new Message(Code.LocalErrorAck));
 			c.close();
-			Intercom.getInstance().destroyAll(); //Reset client
+			Campfire.getInstance().destroyAll(); //Reset client
 			GUI.getInstance().addMessage("There was an error with the special", MessageBox.error);
 			break;
 
@@ -146,6 +146,6 @@ public class Special {
 		if (audio!=null) audio.end();
 		if (writer!=null) writer.end();
 		if (c!=null) c.close();
-		Intercom.cGUI.changeView(HomeView.getInstance());
+		Campfire.cGUI.changeView(HomeView.getInstance());
 	}
 }

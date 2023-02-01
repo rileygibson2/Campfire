@@ -1,12 +1,10 @@
 package general;
 
-import java.awt.Cursor;
 import java.io.InputStream;
 import java.net.URL;
 
 import javax.sound.sampled.AudioFormat;
 
-import client.gui.GUI;
 import network.messages.Code;
 
 public class Utils {

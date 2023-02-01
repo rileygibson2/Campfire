@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
 import general.GetterSubmitter;
@@ -49,7 +49,7 @@ public class LinkManager extends AbstractManager {
 					//Update all addresses for this computer every 2 mins
 					if (getIncrement()>0&&getIncrement()%24==0) NetworkManager.buildLocalAddresses();
 
-					if (!Intercom.getInstance().isCommunicating()) { //If in a current communication then don't check
+					if (!Campfire.getInstance().isCommunicating()) { //If in a current communication then don't check
 						try {
 							Connection c = NetworkManager.getConnectionManager().generateConnection(false);
 							ConnectionRouter cR = new ConnectionRouter(c);
@@ -97,8 +97,8 @@ public class LinkManager extends AbstractManager {
 			if (ports.a.isEmpty()) return false;
 			if (!NetworkManager.isLocalAddress(InetAddress.getByName(ports.a))) return false;
 		} catch (UnknownHostException e) {CLI.debug(e.toString()); return false;}
-		if (ports.b!=Intercom.getListenPort()) return false;
-		if (ports.c!=Intercom.getConnectPort()) return false;
+		if (ports.b!=Campfire.getListenPort()) return false;
+		if (ports.c!=Campfire.getConnectPort()) return false;
 		return true;
 	}
 
@@ -114,16 +114,16 @@ public class LinkManager extends AbstractManager {
 		 * If unlinked and in auto detect mode then try grab a client from
 		 * the pool found by broadcasts
 		 */
-		if (!linked&&Intercom.isAutoDetectEnabled()
-			&&(Intercom.getClient()==null
-				||Intercom.getClient().equals(Client.nullClient)
-				||Intercom.getClient().failedRecently())) {
+		if (!linked&&Campfire.isAutoDetectEnabled()
+			&&(Campfire.getClient()==null
+				||Campfire.getClient().equals(Client.nullClient)
+				||Campfire.getClient().failedRecently())) {
 			
 			if (BroadcastManager.getPotentialClients()==null) return;
 			
 			for (Client c : BroadcastManager.getPotentialClients()) {
-				if (c.equals(Intercom.getClient())) continue; //Intercom is already set with this detected client
-				Intercom.setClient(c);
+				if (c.equals(Campfire.getClient())) continue; //Intercom is already set with this detected client
+				Campfire.setClient(c);
 				GUI.getInstance().addMessage("Intercom detected at "+c.getAddress().getHostAddress(), MessageBox.update);
 				break;
 			}

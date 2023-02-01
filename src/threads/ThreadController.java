@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import client.Intercom;
+import client.Campfire;
 
 public class ThreadController extends Thread {
 
@@ -78,14 +78,14 @@ public class ThreadController extends Thread {
 	
 	public void iterate() {
 		i++;
-		if (iteratePaint) Intercom.cGUI.repaint();
+		if (iteratePaint) Campfire.cGUI.repaint();
 		sleep(wait);
 	}
 
 	public void finish() {
 		stop = true;
 		if (finishAction!=null) finishAction.run();
-		Intercom.cGUI.repaint();
+		Campfire.cGUI.repaint();
 	}
 	
 	public void sleep(int wait) {

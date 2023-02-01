@@ -2,7 +2,7 @@ package client.gui.components;
 
 import java.awt.Color;
 
-import cli.CLI;
+import client.gui.GUI;
 import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
@@ -23,13 +23,13 @@ public class CheckBox extends Component {
 		checked = false;
 		
 		//Outer box
-		SimpleBox sB = new SimpleBox(new Rectangle(0, 0, 100, 100), new Color(100, 100, 100));
+		SimpleBox sB = new SimpleBox(new Rectangle(0, 0, 100, 100), GUI.focus);
 		//sB.setFilled(false);
 		sB.setRounded(true);
 		addComponent(sB);
 
 		//Inner box
-		innerBox = new SimpleBox(new Rectangle(50, 50, 0, 0), new Color(130, 130, 130));
+		innerBox = new SimpleBox(new Rectangle(50, 50, 0, 0), GUI.focus2);
 		innerBox.setRounded(true);
 		addComponent(innerBox);
 		

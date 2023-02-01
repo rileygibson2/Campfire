@@ -15,9 +15,9 @@ import network.managers.NetworkManager;
 import network.messages.Code;
 import network.messages.Message;
 
-public class Intercom {
+public class Campfire {
 
-	static Intercom singleton;
+	static Campfire singleton;
 
 	public static GUI cGUI;
 	Ring ring;
@@ -34,13 +34,13 @@ public class Intercom {
 	private static boolean shutdown;
 	private static boolean isProduction;
 
-	private Intercom() {
+	private Campfire() {
 		setup();
 		CLI.debug("Starting...");
 	}
 
-	public static Intercom getInstance() {
-		if (singleton==null) singleton = new Intercom();
+	public static Campfire getInstance() {
+		if (singleton==null) singleton = new Campfire();
 		return singleton;
 	}
 
@@ -398,18 +398,18 @@ public class Intercom {
 	public static boolean isProduction() {return isProduction;}
 
 	public static void main(String[] args) throws Exception {
-		Intercom.getInstance();
+		Campfire.getInstance();
 
 		if (args.length==1) {
 			if (Integer.parseInt(args[0])==1) {
-				Intercom.setListenPort(5001, false);
-				Intercom.setConnectPort(5000);
+				Campfire.setListenPort(5001, false);
+				Campfire.setConnectPort(5000);
 			}
 			else {
-				Intercom.setListenPort(5000, false);
-				Intercom.setConnectPort(5001);
-				Intercom.setBroadcastListenPort(2000, false);
-				Intercom.setBroadcastPort(2001);
+				Campfire.setListenPort(5000, false);
+				Campfire.setConnectPort(5001);
+				Campfire.setBroadcastListenPort(2000, false);
+				Campfire.setBroadcastPort(2001);
 			}
 		}
 		NetworkManager.getInstance().start();

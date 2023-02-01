@@ -231,7 +231,7 @@ public class AudioManager {
 					// Capture audio data and save it to the file
 					while (isRunning()) {
 						if (micLine==null) {
-							if (!Intercom.isShuttingdown()) CLI.error("Mic became null while running");
+							if (!Campfire.isShuttingdown()) CLI.error("Mic became null while running");
 							break;
 						}
 						micLine.read(buffer, 0, buffer.length);
@@ -244,7 +244,7 @@ public class AudioManager {
 						micLine = null;
 					}
 				}
-				catch (Exception e) {if (!Intercom.isShuttingdown()) CLI.error("Error reading microphone - "+e.getMessage());}
+				catch (Exception e) {if (!Campfire.isShuttingdown()) CLI.error("Error reading microphone - "+e.getMessage());}
 
 				micLock.release();
 			}
@@ -292,7 +292,7 @@ public class AudioManager {
 
 						while (bytesRead != -1 && isRunning()) {
 							if (speakerLine==null) {
-								if (!Intercom.isShuttingdown()) CLI.error("Speakerline became null while playing file");
+								if (!Campfire.isShuttingdown()) CLI.error("Speakerline became null while playing file");
 								break;
 							}
 							bytesRead = audioStream.read(buffer, 0, buffer.length);
@@ -306,7 +306,7 @@ public class AudioManager {
 						speakerLine.close();
 					}
 				}
-				catch (Exception e) {if (!Intercom.isShuttingdown()) CLI.error("Error playing sound - "+e.getMessage());}
+				catch (Exception e) {if (!Campfire.isShuttingdown()) CLI.error("Error playing sound - "+e.getMessage());}
 
 				speakerLock.release();
 			}

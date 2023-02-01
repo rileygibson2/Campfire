@@ -46,9 +46,10 @@ public abstract class Component extends Element {
 
 	public double getOpacity() {return opacity;}
 	
-	public void setOpacity(double d) {
+	public Component setOpacity(double d) {
 		opacity = d;
 		for (Component c : getComponents()) c.setOpacity(d); //Recur down
+		return this; //To allow for chaining
 	}
 
 	public boolean isSelected() {return selected;}

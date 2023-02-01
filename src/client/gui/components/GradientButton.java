@@ -12,10 +12,10 @@ public class GradientButton extends Button {
 	public Color end;
 	
 	public GradientButton(Rectangle r, Color start, Color end) {
-		super(r, null);
+		super(r, new Color(0, 0, 0, 0));
 		this.start = start;
 		this.end = end;
-		drawBox = false;
+		mainBox.setOpacity(0);
 		hasShadow(true);
 	}
 	

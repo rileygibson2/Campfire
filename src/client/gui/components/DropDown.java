@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import cli.CLI;
+import client.gui.GUI;
 import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
@@ -33,7 +34,7 @@ public class DropDown<E> extends Component {
 		selectedItem = noneItem;
 		
 		//Top box
-		topBox = new SimpleBox(new Rectangle(0, 0, 100, 100), new Color(100, 100, 100));
+		topBox = new SimpleBox(new Rectangle(0, 0, 100, 100), GUI.focus);
 		topBox.setRounded(true);
 		addComponent(topBox);
 		
@@ -58,7 +59,6 @@ public class DropDown<E> extends Component {
 	
 	@Override
 	public void doClick(Point p) {
-		CLI.debug("CLICK");
 		boolean closed = false;
 		if (isSelected()) {
 			close(scalePoint(p));
@@ -98,10 +98,10 @@ public class DropDown<E> extends Component {
 		increasePriority();
 
 		//Expanded box
-		addComponent(new SimpleBox(new Rectangle(0, 100, 100, 100*size), new Color(120, 120, 120)));
+		addComponent(new SimpleBox(new Rectangle(0, 100, 100, 100*size), GUI.focus2));
 		
 		//Curve masker box
-		addComponent(new SimpleBox(new Rectangle(0, 95, 100, 10), new Color(120, 120, 120)));
+		addComponent(new SimpleBox(new Rectangle(0, 95, 100, 10), GUI.focus2));
 		
 		//Top bar
 		addComponent(new SimpleBox(new Rectangle(0, 95, 100, 4), new Color(50, 50, 50)));

@@ -8,9 +8,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cli.CLI;
-import general.GetterSubmitter;
-import threads.AnimationFactory;
-import threads.AnimationFactory.Animations;
 
 public class NetworkManager extends AbstractManager {
 

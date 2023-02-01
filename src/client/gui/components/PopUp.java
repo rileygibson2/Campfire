@@ -3,6 +3,7 @@ package client.gui.components;
 import java.awt.Color;
 import java.awt.Font;
 
+import client.gui.GUI;
 import general.Point;
 import general.Rectangle;
 
@@ -23,13 +24,13 @@ public class PopUp extends Component {
 		addComponent(smother);
 
 		//Main box
-		mainBox = new SimpleBox(new Rectangle(0, 0, 100, 100), new Color(80, 80, 80));
+		mainBox = new SimpleBox(new Rectangle(0, 0, 100, 100), GUI.fg);
 		mainBox.setRounded(true);
 		mainBox.increasePriority();
 		addComponent(mainBox);
 
 		//Top bar
-		SimpleBox tB = new SimpleBox(new Rectangle(getX(), getY(), getWidth(), 12.5), new Color(100, 100, 100));
+		SimpleBox tB = new SimpleBox(new Rectangle(getX(), getY(), getWidth(), 12.5), GUI.focus);
 		tB.setAbsolute(true);
 		tB.setRounded(new int[]{1, 4});
 		mainBox.addComponent(tB);
@@ -40,7 +41,7 @@ public class PopUp extends Component {
 		tB.addComponent(l);
 
 		//Exit button
-		close = new Button(new Rectangle(getX()+getWidth()*0.70, getY()+getHeight()*0.75, 5, 10), new Color(100, 100, 100));
+		close = new Button(new Rectangle(getX()+getWidth()*0.70, getY()+getHeight()*0.75, 5, 10), GUI.focus);
 		close.setAbsolute(true);
 		close.setClickAction(() -> close(false));
 		close.addComponent(new Image(new Rectangle(10, 10, 80, 80), "exit.png"));
@@ -59,11 +60,13 @@ public class PopUp extends Component {
 	public void setCloseButtonPos(double x, double y) {
 		close.setX(x);
 		close.setY(y);
+		close.updateOriginalRec();
 	}
 	
 	public void setAcceptButtonPos(double x, double y) {
 		accept.setX(x);
 		accept.setY(y);
+		accept.updateOriginalRec();
 	}
 
 	//So components get added to the main box not to the popup which is essentially a wrapper

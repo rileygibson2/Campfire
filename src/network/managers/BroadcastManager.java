@@ -10,7 +10,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
+import client.gui.views.HomeView;
 import general.Pair;
 import network.Client;
 import network.messages.Code;
@@ -53,14 +54,14 @@ public class BroadcastManager extends AbstractManager {
 
 						//Broadcast message
 						byte[] m = new Message(Code.Broadcast).formatBytes();
-						DatagramPacket packet = new DatagramPacket(m, m.length, InetAddress.getByName("255.255.255.255"), Intercom.getBroadcastPort());
+						DatagramPacket packet = new DatagramPacket(m, m.length, InetAddress.getByName("255.255.255.255"), Campfire.getBroadcastPort());
 						writeSocket.send(packet);
 
 						iterate();
 					}
 				} 
 				catch (IOException e) {
-					if (shutdown||Intercom.isShuttingdown()) return;
+					if (shutdown||Campfire.isShuttingdown()) return;
 					fatalError("There was a problem with the broadcast writer - "+e.getMessage(), false);
 				}
 			}
@@ -80,12 +81,12 @@ public class BroadcastManager extends AbstractManager {
 					try {
 						byte[] buffer = new byte[1024];
 						DatagramPacket recieved = new DatagramPacket(buffer, buffer.length);
-						listenSocket = new DatagramSocket(Intercom.getBroadcastPort());
+						listenSocket = new DatagramSocket(Campfire.getBroadcastPort());
 						listenSocket.setSoTimeout(5000);
 						listenSocket.receive(recieved);
 
 						//Check sender wasn't this computer
-						if (Intercom.isProduction()) {
+						if (Campfire.isProduction()) {
 							if (NetworkManager.isLocalAddress(recieved.getAddress())) {
 								if (CLI.isVerbose()) CLI.debug("Local broadcast response recieved");
 								continue;
@@ -101,8 +102,8 @@ public class BroadcastManager extends AbstractManager {
 
 						switch (m.getCode()) {
 						case Broadcast:
-							byte[] r = new Message(Code.BroadcastAck, "cP="+Intercom.getConnectPort()+",lP="+Intercom.getListenPort()).formatBytes();
-							DatagramPacket response = new DatagramPacket(r, r.length, InetAddress.getByName("255.255.255.255"), Intercom.getBroadcastListenPort());
+							byte[] r = new Message(Code.BroadcastAck, "cP="+Campfire.getConnectPort()+",lP="+Campfire.getListenPort()).formatBytes();
+							DatagramPacket response = new DatagramPacket(r, r.length, InetAddress.getByName("255.255.255.255"), Campfire.getBroadcastListenPort());
 							new DatagramSocket().send(response);
 							break;
 
@@ -111,7 +112,7 @@ public class BroadcastManager extends AbstractManager {
 							Pair<Integer, Integer> ports = m.splitPorts();
 
 							//Check ports match before adding potential client
-							if (ports.a!=Intercom.getListenPort()||ports.b!=Intercom.getConnectPort()) break;
+							if (ports.a!=Campfire.getListenPort()||ports.b!=Campfire.getConnectPort()) break;
 							addPotentialClient(new Client(recieved.getAddress(), ports.a, ports.b));
 							break;
 
@@ -120,7 +121,7 @@ public class BroadcastManager extends AbstractManager {
 						}
 					}
 					catch (IOException e) {
-						if (shutdown||Intercom.isShuttingdown()) return;
+						if (shutdown||Campfire.isShuttingdown()) return;
 						if (e.getClass()==SocketTimeoutException.class) {
 							if (CLI.isVerbose()) CLI.debug("No responses - timeout");
 						}
@@ -144,8 +145,8 @@ public class BroadcastManager extends AbstractManager {
 					Set<Client> toRemove = new HashSet<>();
 					for (Client c : potentialClients) {
 						if (c.isExpired()
-							|| c.getConnectPort()!=Intercom.getListenPort()
-							|| c.getListenPort()!=Intercom.getConnectPort()
+							|| c.getConnectPort()!=Campfire.getListenPort()
+							|| c.getListenPort()!=Campfire.getConnectPort()
 							|| c.failedRecently()) {
 							toRemove.add(c);
 						}
@@ -159,11 +160,17 @@ public class BroadcastManager extends AbstractManager {
 					 * This should only happen if the cause of the
 					 * client being removed is something other than just expired.
 					 */
-					if (Intercom.isAutoDetectEnabled()&&toRemove.contains(Intercom.getClient())) {
-						Intercom.setClient(Client.nullClient);
+					if (Campfire.isAutoDetectEnabled()&&toRemove.contains(Campfire.getClient())) {
+						Campfire.setClient(Client.nullClient);
 					}
 
 					potentialClients.removeAll(toRemove);
+					
+					
+					//Handle multiple clients button
+					if (potentialClients.size()>0) HomeView.getInstance().showUsersButton();
+					else HomeView.getInstance().hideUsersButton();
+					
 					iterate();
 				}
 			}

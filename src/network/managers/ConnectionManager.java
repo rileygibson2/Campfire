@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 import network.Client;
 import network.connection.Connection;
 import network.connection.ConnectionException;
@@ -41,7 +41,7 @@ public class ConnectionManager extends AbstractManager {
 
 				//Start server socket
 				try {
-					serverSocket = new ServerSocket(Intercom.getListenPort());
+					serverSocket = new ServerSocket(Campfire.getListenPort());
 					while (isRunning()&&!shutdown) {
 						if (serverSocket==null||serverSocket.isClosed()) throw new IOException("Server socket is closed or null");
 
@@ -54,7 +54,7 @@ public class ConnectionManager extends AbstractManager {
 					}
 				}
 				catch (IOException e) {
-					if (!shutdown&&!Intercom.isShuttingdown()) {
+					if (!shutdown&&!Campfire.isShuttingdown()) {
 						fatalError("There was a problem with the connection listener - "+e.getMessage(), true);
 					}
 				}
@@ -70,30 +70,30 @@ public class ConnectionManager extends AbstractManager {
 
 		try {
 			//Preform checks
-			if (Intercom.getClient()==null||Intercom.getClient()==Client.nullClient) throw new ConnectionException("Client is null", verbose);
-			InetAddress dest = Intercom.getClient().getAddress();
-			int port = Intercom.getConnectPort();
+			if (Campfire.getClient()==null||Campfire.getClient()==Client.nullClient) throw new ConnectionException("Client is null", verbose);
+			InetAddress dest = Campfire.getClient().getAddress();
+			int port = Campfire.getConnectPort();
 			if (dest==null) throw new ConnectionException("Client's IP is null", verbose);
 			if (port<1024) throw new ConnectionException("Connect Port is invalid", verbose);
 
 			//Check not calling self
 			if (NetworkManager.getLocalAddresses()!=null
 					&&NetworkManager.isLocalAddress(dest)
-					&&port==Intercom.getListenPort()) throw new ConnectionException("Cannot call self", verbose);
+					&&port==Campfire.getListenPort()) throw new ConnectionException("Cannot call self", verbose);
 
-			Connection c = Connection.generate(dest, Intercom.getConnectPort(), verbose);
-			Intercom.getClient().setFailedRecently(false);
+			Connection c = Connection.generate(dest, Campfire.getConnectPort(), verbose);
+			Campfire.getClient().setFailedRecently(false);
 			if (c!=null) connections.add(c);
 			
 			
 			//Successful connection so update current client to signify that
-			Intercom.getClient().setFailedRecently(false);
-			Intercom.getClient().resetTimestamp();
+			Campfire.getClient().setFailedRecently(false);
+			Campfire.getClient().resetTimestamp();
 			return c;
 		}
 		catch (ConnectionException e) {
 			//Exception only caught so can set recently failed on Client
-			if (Intercom.getClient()!=null) Intercom.getClient().setFailedRecently(true);
+			if (Campfire.getClient()!=null) Campfire.getClient().setFailedRecently(true);
 			throw e;
 		}
 	}

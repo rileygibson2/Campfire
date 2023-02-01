@@ -51,6 +51,7 @@ public abstract class Element {
 	public Rectangle getRec() {return r;}
 	public Rectangle getOriginalRec() {return rO;}
 	public void changeOriginalRec(Rectangle r) {rO = r;}
+	public void updateOriginalRec() {rO = r.clone();}
 	
 	public Element getParent() {return parent;}
 	public void setParent(Element e) {parent = e;}

@@ -3,21 +3,26 @@ package client.gui.views;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
+import java.util.AbstractMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
 import client.AudioManager;
-import client.Intercom;
+import client.Campfire;
 import client.Special.Type;
+import client.gui.GUI;
 import client.gui.components.Button;
 import client.gui.components.CheckBox;
+import client.gui.components.Component;
 import client.gui.components.DropDown;
 import client.gui.components.GradientButton;
 import client.gui.components.Image;
 import client.gui.components.Label;
+import client.gui.components.MessageBox;
 import client.gui.components.PopUp;
 import client.gui.components.SimpleBox;
 import client.gui.components.Slider;
@@ -26,7 +31,12 @@ import general.Getter;
 import general.GetterSubmitter;
 import general.Point;
 import general.Rectangle;
+import network.Client;
+import network.managers.BroadcastManager;
 import network.managers.NetworkManager;
+import threads.AnimationFactory;
+import threads.AnimationFactory.Animations;
+import threads.ThreadController;
 
 public class HomeView extends View {
 
@@ -40,42 +50,68 @@ public class HomeView extends View {
 	DropDown<Mixer.Info> audioOut;
 	DropDown<Line.Info> remote;
 
+	Button clients; //Client select button
+	ThreadController clientsFade;
+
 	private HomeView() {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
 
 		//Main label
-		addComponent(new Label(new Point(79, 88.5), "Campfire", new Font("Geneva", Font.ROMAN_BASELINE, 20), new Color(230, 230, 230)));
-		addComponent(new Image(new Rectangle(69, 81, 10, 15), "icon.png"));
+		addComponent(new Label(new Point(85, 93), "Campfire", new Font("neoteric", Font.BOLD, 16), new Color(180, 180, 180)));
+		addComponent(new Image(new Rectangle(89, 77, 5, 12), "logo.png").setOpacity(70));
 
-		//Xbox buttons
+		//Main button
 		Button b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(89, 141, 19), new Color(112, 255, 12));
-		b.addComponent(new Image(new Rectangle(17.5, 25, 65, 50), "mic.png"));
-		b.setClickAction(() -> Intercom.getInstance().startInitiatingRing());
+		//Button b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(250, 128, 0), new Color(240, 187, 0));
+		b.addButtonComponent(new Image(new Rectangle(17.5, 25, 65, 50), "mic.png"));
+		b.setClickAction(() -> Campfire.getInstance().startInitiatingRing());
 		b.freezeShadow();
 		addComponent(b);
 
-		/*b = new XboxButton(new Rectangle(80, 40, 10, 20), "", new Color(126, 0, 14), new Color(191, 0, 9), this);
-		b.addComponent(new Image(new Rectangle(15, 15, 70, 70), "endcall.png", b));
-		b.freezeShadow();
-		addComponent(b);*/
+		//Multiple users icon
+		clients = new Button(new Rectangle(86, 7, 9, 18), MessageBox.error);
+		clients.setOval(true);
+		clients.setClickAction(() -> {
+			PopUp p = new PopUp("Pick Your Intercom", new Point(50, 50));
+			
+			DropDown<Client> d = new DropDown<Client>(new Rectangle(15, 38, 70, 25));
+			d.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+			p.addPopUpComponent(d);
+
+			//Actions
+			d.setSelected(new AbstractMap.SimpleEntry<String, Client>(Campfire.getClient().getIP(), Campfire.getClient()));
+			d.setActions(new GetterSubmitter<LinkedHashMap<String, Client>, Client>() {
+				public void submit(Client c) {
+					Campfire.setClient(c);
+				}
+
+				public LinkedHashMap<String, Client> get() {
+					LinkedHashMap<String, Client> result = new LinkedHashMap<>();
+					for (Client c : BroadcastManager.getPotentialClients()) result.put(c.getIP(), c);
+					return result;
+				}
+			});
+			
+			p.increasePriority();
+			addComponent(p);
+		});
+		clients.addComponent(new Image(new Rectangle(11, 10, 80, 80), "telephone.png"));
+		addComponent(clients);
+		clients.setVisible(false);
 
 		/*b = new XboxButton(new Rectangle(60, 40, 7, 14), "X", new Color(12, 45, 241), new Color(51, 100, 253), this);
 		b.freezeShadow();
-		addComponent(b);
-
-		b = new XboxButton(new Rectangle(70, 20, 7, 14), "Y", new Color(233, 144, 12), new Color(251, 200, 8), this);
-		b.freezeShadow();
-		addComponent(new XboxButton(new Rectangle(70, 20, 7, 14), "Y", new Color(233, 144, 12), new Color(251, 200, 8), this));
-		 */
+		addComponent(b);*/
 
 		//Sidebar
-		SimpleBox sB = new SimpleBox(new Rectangle(0, 0, 11, 100), new Color(100, 100, 100));
+		int sbImgOp = 70;
+		SimpleBox sB = new SimpleBox(new Rectangle(0, 0, 11, 100), GUI.fg);
 		sB.setRounded(new int[] {3, 4});
 		addComponent(sB);
 		int y = 80;
 
 		//Link
-		final Button link = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
+		final Button link = new Button(new Rectangle(0, y, 100, 20), GUI.fg);
 		sB.addComponent(link);
 		link.setClickAction(() -> {
 			PopUp p = new PopUp("Intercom Status", new Point(50, 50));
@@ -89,11 +125,21 @@ public class HomeView extends View {
 			};
 			l.setCentered(true);
 			p.addPopUpComponent(l);
+
+			l = new Label(new Point(15, 85), "Auto Detect", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
+			p.addPopUpComponent(l);
+			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
+			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
+				public void submit(Boolean b) {Campfire.setAutoDetect(b);}
+				public Boolean get() {return Campfire.isAutoDetectEnabled();}
+			});
+			p.addPopUpComponent(cB);
+
 			p.increasePriority();
 			addComponent(p);
 		});
-		link.setHoverAction(() -> adjustColorHover(link, true));
-		link.setUnHoverAction(() -> adjustColorHover(link, false));
+		link.setHoverAction(() -> buttonHoverAction(link, true));
+		link.setUnHoverAction(() -> buttonHoverAction(link, false));
 
 		Image linkImage = new Image(new Rectangle(23, 20, 50, 55), "") {
 			@Override
@@ -103,11 +149,12 @@ public class HomeView extends View {
 				super.draw(g);
 			}
 		};
-		link.addComponent(linkImage);
+		//linkImage.setOpacity(sbImgOp);
+		link.addButtonComponent(linkImage);
 
 		//Mute
 		y -= 20;
-		final SimpleBox mute = new SimpleBox(new Rectangle(0, y, 100, 20), new Color(100, 100, 100, 0));
+		final SimpleBox mute = new SimpleBox(new Rectangle(0, y, 100, 20), GUI.fg);
 		sB.addComponent(mute);
 		mute.setHoverAction(() -> {
 			volumeSlider = new Slider(new Rectangle(100, 25, 200, 50));
@@ -131,49 +178,57 @@ public class HomeView extends View {
 				}
 			});
 			mute.addComponent(volumeSlider);
+
+			//Image color
+			List<Component> comps = mute.getComponents(Image.class);
+			if (comps!=null&&!comps.isEmpty()) comps.get(0).setOpacity(100);
 		});
 		mute.setUnHoverAction(() -> {
 			mute.removeComponent(volumeSlider);
+
+			//Image color
+			List<Component> comps = mute.getComponents(Image.class);
+			if (comps!=null&&!comps.isEmpty()) comps.get(0).setOpacity(sbImgOp);
 		});
-		mute.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "unmuted.png"));
+		mute.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "unmuted.png").setOpacity(sbImgOp));
 
 		//Extras
 		y -= 20;
-		final Button extras = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
+		final Button extras = new Button(new Rectangle(0, y, 100, 20), GUI.fg);
 		sB.addComponent(extras);
 		extras.setHoverAction(() -> {
-			adjustColorHover(extras, true);
+			buttonHoverAction(extras, true);
 			extrasPopup = new SimpleBox(new Rectangle(100, 10, 200, 80), new Color(70, 70, 70));
 			extrasPopup.setRounded(new int[] {3, 4});
 			extras.addComponent(extrasPopup);
 
 			Button b1 = new Button(new Rectangle(10, 17.5, 25, 65), new Color(250, 180, 50));
-			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.PinaColada));
-			b1.addComponent(new Image(new Rectangle(12, 12, 70, 70), "drink.png"));
+			b1.setClickAction(() -> Campfire.getInstance().startInitiatingSpecial(Type.PinaColada));
+			b1.addButtonComponent(new Image(new Rectangle(12, 12, 70, 70), "drink.png"));
 			extrasPopup.addComponent(b1);
 
 			b1 = new Button(new Rectangle(45, 17.5, 25, 65), new Color(50, 220, 50));
-			b1.setClickAction(() -> Intercom.getInstance().startInitiatingSpecial(Type.Smoko));
-			b1.addComponent(new Image(new Rectangle(15, 8, 70, 80), "coffee.png"));
+			b1.setClickAction(() -> Campfire.getInstance().startInitiatingSpecial(Type.Smoko));
+			b1.addButtonComponent(new Image(new Rectangle(15, 8, 70, 80), "coffee.png"));
 			extrasPopup.addComponent(b1);
 		});
 		extras.setUnHoverAction(() -> {
-			adjustColorHover(extras, false);
+			buttonHoverAction(extras, false);
 			extras.removeComponent(extrasPopup);
 		});
-		extras.addComponent(new Image(new Rectangle(31.5, 30, 37, 40), "plus.png"));
+		extras.addButtonComponent(new Image(new Rectangle(31.5, 30, 37, 40), "plus.png").setOpacity(sbImgOp));
 
 		//Client
 		y -= 20;
-		final Button client = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
+		final Button client = new Button(new Rectangle(0, y, 100, 20), GUI.fg);
 		sB.addComponent(client);
 		client.setClickAction(() -> {
 			PopUp p = new PopUp("Set Client IP", new Point(50, 50));
 
-			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Intercom.getClient().getIP());
+			TextBox t = new TextBox(new Rectangle(15, 37, 70, 25), Campfire.getClient().getIP());
 			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Intercom.setIP(s);}
-				public String get() {return Intercom.getClient().getIP();}
+				public void submit(String s) {Campfire.setIP(s);}
+				public String get() {return Campfire.getClient().getIP();}
 			});
 			t.setDescriptionAction(new Getter<String>() {
 				public String get() {return "Enter an IP";}
@@ -182,8 +237,8 @@ public class HomeView extends View {
 
 			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
 			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
-				public void submit(Boolean b) {Intercom.setAutoDetect(b);}
-				public Boolean get() {return Intercom.isAutoDetectEnabled();}
+				public void submit(Boolean b) {Campfire.setAutoDetect(b);}
+				public Boolean get() {return Campfire.isAutoDetectEnabled();}
 			});
 			p.addPopUpComponent(cB);
 
@@ -191,28 +246,47 @@ public class HomeView extends View {
 			p.addPopUpComponent(l);
 
 			p.increasePriority();
-			p.setCloseAction(() -> Intercom.setIP(t.getText()));
+			p.setCloseAction(() -> Campfire.setIP(t.getText()));
 			addComponent(p);
 		});
-		client.setHoverAction(() -> adjustColorHover(client, true));
-		client.setUnHoverAction(() -> adjustColorHover(client, false));
-		client.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "connection.png"));
+		client.setHoverAction(() -> buttonHoverAction(client, true));
+		client.setUnHoverAction(() -> buttonHoverAction(client, false));
+		client.addButtonComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "connection.png").setOpacity(sbImgOp));
 
 		//Settings
 		y -= 20;
-		final Button settings = new Button(new Rectangle(0, y, 100, 20), new Color(100, 100, 100));
+		final Button settings = new Button(new Rectangle(0, y, 100, 20), GUI.fg);
 		sB.addComponent(settings);
 		createSettings(settings);
 		//settings.setClickAction(() -> Intercom.cGUI.changeView(new SettingsView()));
-		settings.setHoverAction(() -> adjustColorHover(settings, true));
-		settings.setUnHoverAction(() -> adjustColorHover(settings, false));
-		settings.addComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "settings.png"));
+		settings.setHoverAction(() -> buttonHoverAction(settings, true));
+		settings.setUnHoverAction(() -> buttonHoverAction(settings, false));
+		settings.addButtonComponent(new Image(new Rectangle(27.5, 25.5, 45, 50), "settings.png").setOpacity(sbImgOp));
 	}
 
 	public static HomeView getInstance() {
 		if (singleton==null) singleton = new HomeView();
 		return singleton;
 	};
+
+	public void showUsersButton() {
+		if (!clients.isVisible()) {
+			clients.setVisible(true);
+			clients.setOpacity(0);
+			if (clientsFade!=null) clientsFade.end();
+			clientsFade = AnimationFactory.getAnimation(clients, Animations.Fade, 100);
+			clientsFade.start();
+		}
+	}
+
+	public void hideUsersButton() {
+		if (clients.isVisible()) {
+			if (clientsFade!=null) clientsFade.end();
+			clientsFade = AnimationFactory.getAnimation(clients, Animations.Fade, 0);
+			clientsFade.setFinishAction(() -> clients.setVisible(false));
+			clientsFade.start();
+		}
+	}
 
 	public void createSettings(Button settings) {
 		settings.setClickAction(() -> {
@@ -262,40 +336,54 @@ public class HomeView extends View {
 			x = 55;
 			y = 25;
 			p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
-			TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getConnectPort());
+			TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getConnectPort());
 			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Intercom.setConnectPort(s);}
-				public String get() {return ""+Intercom.getConnectPort();}
+				public void submit(String s) {Campfire.setConnectPort(s);}
+				public String get() {return ""+Campfire.getConnectPort();}
 			});
 			p.addPopUpComponent(t);
 
 			//Listen port textbox
 			y += 30;
 			p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
-			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Intercom.getListenPort());
+			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getListenPort());
 			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Intercom.setListenPort(s, true);}
-				public String get() {return ""+Intercom.getListenPort();}
+				public void submit(String s) {Campfire.setListenPort(s, true);}
+				public String get() {return ""+Campfire.getListenPort();}
 			});
 			p.addPopUpComponent(t);
-			
+
 			//Finish up
 			p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
 			p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
 			p.increasePriority();
 			addComponent(p);
+			
+			//Anti aliasing checkbox
+			Label l = new Label(new Point(13, 88.5), "Anti Aliasing", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
+			p.addPopUpComponent(l);
+			CheckBox cB = new CheckBox(new Rectangle(7, 84, 4, 8));
+			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
+				public void submit(Boolean b) {GUI.getInstance().setAntiAliasing(b);}
+				public Boolean get() {return GUI.getInstance().getAntiAliasing();}
+			});
+			p.addPopUpComponent(cB);
 		});
 	}
 
-	public void adjustColorHover(Button b, boolean hoverOn) {
-		Color c = b.col;
+	public void buttonHoverAction(Button b, boolean hoverOn) {
+		Color c = b.getColor();
 		if (hoverOn) {
-			b.col = new Color(c.getRed()+20, c.getGreen()+20, c.getBlue()+20);
+			b.setColor(new Color(c.getRed()+20, c.getGreen()+20, c.getBlue()+20));
 			b.increasePriority();
+			List<Component> comps = b.mainBox.getComponents(Image.class);
+			if (comps!=null&&!comps.isEmpty()) comps.get(0).setOpacity(100);
 		}
 		else {
-			b.col = new Color(c.getRed()-20, c.getGreen()-20, c.getBlue()-20);
+			b.setColor(new Color(c.getRed()-20, c.getGreen()-20, c.getBlue()-20));
 			b.decreasePriority();
+			List<Component> comps = b.mainBox.getComponents(Image.class);
+			if (comps!=null&&!comps.isEmpty()) comps.get(0).setOpacity(70);
 		}
 	}
 

@@ -6,7 +6,6 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.event.KeyEvent;
 
-import cli.CLI;
 import client.gui.GUI;
 import client.gui.IO;
 import general.Getter;

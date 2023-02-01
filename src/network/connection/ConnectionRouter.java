@@ -2,10 +2,8 @@ package network.connection;
 
 
 import cli.CLI;
-import client.Intercom;
+import client.Campfire;
 import client.Special.Type;
-import client.gui.GUI;
-import client.gui.components.MessageBox;
 import general.GetterSubmitter;
 import general.Pair;
 import network.messages.Code;
@@ -42,7 +40,7 @@ public class ConnectionRouter {
 		case CallRequest:
 			CLI.debug("Routing to recieving ring");
 			c.setOnUpdate(null);
-			Intercom.getInstance().startRecievingRing(c);
+			Campfire.getInstance().startRecievingRing(c);
 			break;
 			
 		case SpecialRequest:
@@ -64,12 +62,12 @@ public class ConnectionRouter {
 			}
 			
 			c.setOnUpdate(null);
-			Intercom.getInstance().startRecievingSpecial(c, type);
+			Campfire.getInstance().startRecievingSpecial(c, type);
 			break;
 			
 		case Ping:
 			//Pass info about this clients port settings into acknowledgement
-			c.write(new Message(Code.PingAck, "ip="+Intercom.getClient().getIP()+",cP="+Intercom.getConnectPort()+",lP="+Intercom.getListenPort()));
+			c.write(new Message(Code.PingAck, "ip="+Campfire.getClient().getIP()+",cP="+Campfire.getConnectPort()+",lP="+Campfire.getListenPort()));
 			c.close();
 			break;
 			
