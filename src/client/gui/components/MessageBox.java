@@ -48,7 +48,7 @@ public class MessageBox extends Component {
 		mainBox.increasePriority();
 		addComponent(mainBox);
 		
-		label = new Label(new Point(49, 50), text, new Font("Geneva", Font.BOLD, 12), new Color(255, 255, 255));
+		label = new Label(new Point(49, 50), text, new Font(GUI.baseFont, Font.BOLD, 12), new Color(255, 255, 255));
 		label.setCentered(true);
 		mainBox.addComponent(label);
 		

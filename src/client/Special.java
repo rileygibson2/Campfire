@@ -82,6 +82,7 @@ public class Special {
 		case Smoko: path = "smoko.wav"; break;
 		}
 		audio = AudioManager.getInstance().getSoundWriter(path, false);
+		audio.setPaintOnIterate(false);
 		audio.start();
 	}
 

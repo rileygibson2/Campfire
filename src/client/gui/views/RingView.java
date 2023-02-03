@@ -51,7 +51,7 @@ public class RingView extends View {
 		
 		if (!recieving) return;
 		//Label and line
-		Label l = new Label(new Point(34, 72), "Incoming Call", new Font("Geneva", Font.ROMAN_BASELINE, 25), new Color(200, 200, 200));
+		Label l = new Label(new Point(34, 72), "Incoming Call", new Font(GUI.baseFont, Font.ROMAN_BASELINE, 25), new Color(200, 200, 200));
 		l.setOpacity(0);
 		addComponent(l);
 		SimpleBox sB = new SimpleBox(new Rectangle(35, 60, 30, 0.4), new Color(200, 200, 200));

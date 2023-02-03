@@ -39,6 +39,9 @@ public class GUI extends JPanel {
 	public final static Color focus = new Color(70, 70, 70);
 	public final static Color focus2 = new Color(90, 90, 90);
 	private boolean antiAlias;
+	
+	public final static String baseFont = "Geneva";
+	public final static String logoFont = "neoteric";
 
 	private GUI() {
 		io = IO.getInstance();

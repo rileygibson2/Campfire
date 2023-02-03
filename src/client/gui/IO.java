@@ -7,6 +7,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import client.gui.components.Component;
 import general.Point;
 import network.managers.BroadcastManager;
 import network.managers.NetworkManager;
+import threads.ThreadController;
 
 public class IO implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
 	
@@ -23,9 +25,14 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 	private Set<Component> keyListeners;
 	private Point dragPoint;
 	
+	private static ThreadController paint;
+	private static Instant paintRequested; //Time at which screen was last interacted with or a paint was requested
+	private final static int paintTimeout = 2;
+	
 	private IO() {
 		this.keyListeners = new HashSet<Component>();
 		dragPoint = null;
+		startPaintThread();
 	}
 	
 	public static IO getInstance() {
@@ -42,8 +49,34 @@ public class IO implements MouseListener, MouseMotionListener, MouseWheelListene
 	}
 	
 	public void finishEvent() {
-		GUI.getInstance().repaint();
+		requestPaint();
 	}
+	
+	public void startPaintThread() {
+		paint = new ThreadController() {
+			@Override
+			public void run() {
+				while (isRunning()) {
+					if (!paintExpired()) GUI.getInstance().repaint();
+					iterate();
+				}
+			}
+		};
+		paint.setPaintOnIterate(false);
+		paint.setWait(50);
+		paint.start();
+	}
+	
+	public void requestPaint() {paintRequested = Instant.now();}
+	
+	public boolean paintExpired() {
+		if (paintRequested==null) return true;
+        if ((Instant.now().getEpochSecond()-paintRequested.getEpochSecond())>=paintTimeout) {
+        	paintRequested = null;
+        	return true;
+        }
+        return false;
+    }
 	
 	@Override
 	public void mouseMoved(MouseEvent e) {

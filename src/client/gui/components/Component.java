@@ -1,5 +1,6 @@
 package client.gui.components;
 
+import cli.CLI;
 import client.gui.Element;
 import general.Point;
 import general.Rectangle;

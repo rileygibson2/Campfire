@@ -36,7 +36,7 @@ public class PopUp extends Component {
 		mainBox.addComponent(tB);
 
 		//Top label
-		Label l = new Label(new Point(50, 50), label, new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230));
+		Label l = new Label(new Point(50, 50), label, new Font(GUI.baseFont, Font.BOLD, 16), new Color(230, 230, 230));
 		l.setCentered(true);
 		tB.addComponent(l);
 

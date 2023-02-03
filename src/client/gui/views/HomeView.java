@@ -11,6 +11,7 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
+import cli.CLI;
 import client.AudioManager;
 import client.Campfire;
 import client.Special.Type;
@@ -57,7 +58,7 @@ public class HomeView extends View {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
 
 		//Main label
-		addComponent(new Label(new Point(85, 93), "Campfire", new Font("neoteric", Font.BOLD, 16), new Color(180, 180, 180)));
+		addComponent(new Label(new Point(85, 93), "Campfire", new Font(GUI.logoFont, Font.BOLD, 16), new Color(180, 180, 180)));
 		addComponent(new Image(new Rectangle(89, 77, 5, 12), "logo.png").setOpacity(70));
 
 		//Main button
@@ -115,7 +116,7 @@ public class HomeView extends View {
 		sB.addComponent(link);
 		link.setClickAction(() -> {
 			PopUp p = new PopUp("Intercom Status", new Point(50, 50));
-			Label l = new Label(new Point(50, 50), "", new Font("Geneva", Font.BOLD, 16), new Color(230, 230, 230)) {
+			Label l = new Label(new Point(50, 50), "", new Font(GUI.baseFont, Font.BOLD, 16), new Color(230, 230, 230)) {
 				@Override
 				public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
 					if (NetworkManager.getLinkManager().isProbablyLinked()) text = "Currently connected";
@@ -126,7 +127,7 @@ public class HomeView extends View {
 			l.setCentered(true);
 			p.addPopUpComponent(l);
 
-			l = new Label(new Point(15, 85), "Auto Detect", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
+			l = new Label(new Point(15, 85), "Auto Detect", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180));
 			p.addPopUpComponent(l);
 			CheckBox cB = new CheckBox(new Rectangle(5, 78, 7, 14));
 			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
@@ -242,7 +243,7 @@ public class HomeView extends View {
 			});
 			p.addPopUpComponent(cB);
 
-			Label l = new Label(new Point(15, 85), "Auto Detect", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
+			Label l = new Label(new Point(15, 85), "Auto Detect", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180));
 			p.addPopUpComponent(l);
 
 			p.increasePriority();
@@ -291,12 +292,31 @@ public class HomeView extends View {
 	public void createSettings(Button settings) {
 		settings.setClickAction(() -> {
 			PopUp p = new PopUp("Settings", new Point(80, 80));
+			
+			//Tabs
+			SimpleBox tab = new SimpleBox(new Rectangle(0, 2.5, 20, 13), GUI.fg);
+			tab.setClickAction(() -> CLI.debug("AA"));
+			tab.setRounded(new int[] {1, 4});
+			Label l = new Label(new Point(50, 50), "Network", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220));
+			l.setCentered(true);
+			tab.addComponent(l);
+			p.addPopUpComponent(tab);
+			
+			tab = new SimpleBox(new Rectangle(20, 2.5, 15, 13), GUI.focus2);
+			tab.setClickAction(() -> {
+				CLI.debug("AA");
+			});
+			tab.setRounded(new int[] {1, 4});
+			l = new Label(new Point(50, 50), "Audio", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220));
+			l.setCentered(true);
+			tab.addComponent(l);
+			p.addPopUpComponent(tab);
 
-			int x = 6;
-			int y = 25;
-
+			double x = 6;
+			double y = 25;
+			
 			//Audio input dropdown
-			p.addPopUpComponent(new Label(new Point(x, y), "Microphone", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			p.addPopUpComponent(new Label(new Point(x, y), "Microphone", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
 			audioIn = new DropDown<>(new Rectangle(x, y+6, 40, 15));
 			audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
 			p.addPopUpComponent(audioIn);
@@ -315,7 +335,7 @@ public class HomeView extends View {
 
 			//Audio output dropdown
 			y += 30;
-			p.addPopUpComponent(new Label(new Point(x, y), "Speaker", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			p.addPopUpComponent(new Label(new Point(x, y), "Speaker", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
 			audioOut = new DropDown<Mixer.Info>(new Rectangle(x, y+6, 40, 15));
 			audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
 			p.addPopUpComponent(audioOut);
@@ -335,7 +355,7 @@ public class HomeView extends View {
 			//Connect port textbox
 			x = 55;
 			y = 25;
-			p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
 			TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getConnectPort());
 			t.setActions(new GetterSubmitter<String, String>() {
 				public void submit(String s) {Campfire.setConnectPort(s);}
@@ -345,29 +365,40 @@ public class HomeView extends View {
 
 			//Listen port textbox
 			y += 30;
-			p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font("Geneva", Font.BOLD, 14), new Color(220, 220, 220)));
+			p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
 			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getListenPort());
 			t.setActions(new GetterSubmitter<String, String>() {
 				public void submit(String s) {Campfire.setListenPort(s, true);}
 				public String get() {return ""+Campfire.getListenPort();}
 			});
 			p.addPopUpComponent(t);
-
-			//Finish up
-			p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
-			p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
-			p.increasePriority();
-			addComponent(p);
+			
+			//Name textbox
+			y += 30;
+			p.addPopUpComponent(new Label(new Point(x, y), "Station Name", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getIntercomName());
+			t.setActions(new GetterSubmitter<String, String>() {
+				public void submit(String s) {Campfire.setIntercomName(s);}
+				public String get() {return ""+Campfire.getIntercomName();}
+			});
+			p.addPopUpComponent(t);
 			
 			//Anti aliasing checkbox
-			Label l = new Label(new Point(13, 88.5), "Anti Aliasing", new Font("Geneva", Font.BOLD, 13), new Color(180, 180, 180));
-			p.addPopUpComponent(l);
-			CheckBox cB = new CheckBox(new Rectangle(7, 84, 4, 8));
+			x = 7;
+			y = 88.5;
+			p.addPopUpComponent(new Label(new Point(x+6, y), "Anti Aliasing", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180)));
+			CheckBox cB = new CheckBox(new Rectangle(x, y+0.5, 4, 8));
 			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
 				public void submit(Boolean b) {GUI.getInstance().setAntiAliasing(b);}
 				public Boolean get() {return GUI.getInstance().getAntiAliasing();}
 			});
 			p.addPopUpComponent(cB);
+			
+			//Finish up
+			p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
+			p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
+			p.increasePriority();
+			addComponent(p);
 		});
 	}
 

@@ -69,6 +69,7 @@ public class Ring {
 		//Deal with view and audio
 		Campfire.cGUI.changeView(new RingView(recieving));
 		audio = AudioManager.getInstance().getSoundWriter(path, true);
+		audio.setPaintOnIterate(false);
 		audio.start();
 	}
 

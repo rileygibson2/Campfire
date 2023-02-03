@@ -38,7 +38,7 @@ public class DropDown<E> extends Component {
 		addComponent(topBox);
 		
 		//Selected label
-		selectedLabel = new Label(new Point(5, 50), selectedItem.getKey(), new Font("Geneva", Font.ITALIC, 12), new Color(200, 200, 200)); 
+		selectedLabel = new Label(new Point(5, 50), selectedItem.getKey(), new Font(GUI.baseFont, Font.ITALIC, 12), new Color(200, 200, 200)); 
 		topBox.addComponent(selectedLabel);
 		
 		//Scrollbar
@@ -115,7 +115,7 @@ public class DropDown<E> extends Component {
 		
 		for (Map.Entry<String, E> m : options.entrySet()) {
 			//Label
-			Label l = new Label(new Point(8, y), m.getKey(), new Font("Geneva", Font.ITALIC, 11), new Color(200, 200, 200));
+			Label l = new Label(new Point(8, y), m.getKey(), new Font(GUI.baseFont, Font.ITALIC, 11), new Color(200, 200, 200));
 			addComponent(l);
 			sB.addToScroll(l);
 			

@@ -25,6 +25,7 @@ public class Campfire {
 	Special special;
 
 	private static Client client;
+	private static String intercomName;
 	private static int listenPort;
 	private static int connectPort;
 	private static int broadcastPort;
@@ -239,6 +240,13 @@ public class Campfire {
 		CLI.debug("Client set as "+c.toString());
 	}
 	
+	public static void setIntercomName(String name) {intercomName = name;}
+	
+	public static String getIntercomName() {
+		if (intercomName==null) return "";
+		return intercomName;
+	}
+	
 	public static Client getClient() {return client;}
 
 	public static void setIP(String ip) {
@@ -390,6 +398,7 @@ public class Campfire {
 		connectPort = 5000;
 		broadcastListenPort = 2001;
 		broadcastPort = 2000;
+		intercomName = "";
 		
 		autoDetect = true;
 		isProduction = false;

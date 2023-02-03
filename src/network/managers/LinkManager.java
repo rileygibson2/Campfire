@@ -72,6 +72,7 @@ public class LinkManager extends AbstractManager {
 			}
 		};
 		
+		checker.setPaintOnIterate(false);
 		checker.setWait(2000);
 		checker.start();
 	}

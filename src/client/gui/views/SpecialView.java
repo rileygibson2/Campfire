@@ -62,7 +62,7 @@ public class SpecialView extends View {
 		close.setOpacity(0);
 
 		//Label and line
-		Label l = new Label(new Point(50, 72), label, new Font("Geneva", Font.ROMAN_BASELINE, 25), new Color(200, 200, 200));
+		Label l = new Label(new Point(50, 72), label, new Font(GUI.baseFont, Font.ROMAN_BASELINE, 25), new Color(200, 200, 200));
 		l.setOpacity(0);
 		l.setCentered(true);
 		addComponent(l);

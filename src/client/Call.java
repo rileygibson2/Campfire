@@ -56,6 +56,7 @@ public class Call {
 
 		//Start mic reader
 		audio = AudioManager.getInstance().getMicrophoneReader(data, () -> handleMicData());
+		audio.setPaintOnIterate(false);
 		audio.start();
 	}
 

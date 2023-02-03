@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 
 import client.Campfire;
+import client.gui.IO;
 
 public class ThreadController extends Thread {
 
@@ -78,14 +79,14 @@ public class ThreadController extends Thread {
 	
 	public void iterate() {
 		i++;
-		if (iteratePaint) Campfire.cGUI.repaint();
+		if (iteratePaint) IO.getInstance().requestPaint();
 		sleep(wait);
 	}
 
 	public void finish() {
 		stop = true;
 		if (finishAction!=null) finishAction.run();
-		Campfire.cGUI.repaint();
+		if (iteratePaint) IO.getInstance().requestPaint();
 	}
 	
 	public void sleep(int wait) {

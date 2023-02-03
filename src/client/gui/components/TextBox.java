@@ -36,9 +36,9 @@ public class TextBox extends Component {
 		if (text==null) text = "";
 		cursor = "";
 		
-		textLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(200, 200, 200));
+		textLabel = new Label(new Point(8, 55), text, new Font(GUI.baseFont, Font.ITALIC, 15), new Color(200, 200, 200));
 		addComponent(textLabel);
-		descriptionLabel = new Label(new Point(8, 55), text, new Font("Geneva", Font.ITALIC, 15), new Color(140, 140, 140));
+		descriptionLabel = new Label(new Point(8, 55), text, new Font(GUI.baseFont, Font.ITALIC, 15), new Color(140, 140, 140));
 		descriptionLabel.setVisible(false);
 		addComponent(descriptionLabel);
 	}

@@ -68,6 +68,7 @@ public class BroadcastManager extends AbstractManager {
 		};
 
 		writer.setWait(5000);
+		writer.setPaintOnIterate(false);
 		writer.start();
 	}
 
@@ -132,6 +133,7 @@ public class BroadcastManager extends AbstractManager {
 			}
 		};
 
+		listener.setPaintOnIterate(false);
 		listener.start();
 	}
 
@@ -176,6 +178,7 @@ public class BroadcastManager extends AbstractManager {
 			}
 		};
 
+		cleaner.setPaintOnIterate(false);
 		cleaner.setWait(2000);
 		cleaner.start();
 	}

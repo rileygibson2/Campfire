@@ -62,6 +62,7 @@ public class ConnectionManager extends AbstractManager {
 			}
 		};
 		
+		server.setPaintOnIterate(false);
 		server.start();
 	}
 
