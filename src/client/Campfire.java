@@ -1,13 +1,21 @@
 package client;
 
 import java.awt.Color;
+import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 import cli.CLI;
 import client.Special.Type;
 import client.gui.GUI;
 import client.gui.components.MessageBox;
+import general.Utils;
 import network.Client;
 import network.connection.Connection;
 import network.connection.ConnectionException;
@@ -31,7 +39,7 @@ public class Campfire {
 	private static int broadcastPort;
 	private static int broadcastListenPort;
 	private static boolean autoDetect;
-	
+
 	private static boolean shutdown;
 	private static boolean isProduction;
 
@@ -239,14 +247,40 @@ public class Campfire {
 		client = c;
 		CLI.debug("Client set as "+c.toString());
 	}
-	
-	public static void setIntercomName(String name) {intercomName = name;}
-	
+
+	public static void setIntercomName(String name) {
+		intercomName = name;
+		cGUI.addMessage("Intercom name set as "+getIntercomName(), MessageBox.ok);
+		storeIntercomName();
+	}
+
 	public static String getIntercomName() {
 		if (intercomName==null) return "";
 		return intercomName;
 	}
-	
+
+	public static void storeIntercomName() {
+		try {
+			URL url = Utils.getURL("persistency/intercom-name");
+			if (url==null) throw new IOException("URL was null");
+			Path filePath = Paths.get(url.toURI());
+			Files.write(filePath, getIntercomName().getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+			CLI.debug("Intercom name sucessfully stored in persistency");
+		} catch (IOException | URISyntaxException e) {CLI.error("Could not persistantly store intercom name - "+e.getMessage());}
+	}
+
+	public String getStoredIntercomName() {
+		try {
+			URL url = Utils.getURL("persistency/intercom-name");
+			if (url==null) return null;
+			Path filePath = Paths.get(url.toURI());
+			String name =  new String(Files.readAllBytes(filePath));
+			CLI.debug("Intercom name sucessfully read from persistency");
+			return name;
+		} catch (IOException | URISyntaxException e) {CLI.error("Could not read stored intercom name from persistency - "+e.getMessage());}
+		return null;
+	}
+
 	public static Client getClient() {return client;}
 
 	public static void setIP(String ip) {
@@ -310,7 +344,7 @@ public class Campfire {
 			cGUI.addMessage("Connecting on port "+p+" is not allowed", MessageBox.error);
 		}
 	}
-	
+
 	public static int getBroadcastListenPort() {return broadcastListenPort;}
 
 	public static void setBroadcastListenPort(int p, boolean restart) {
@@ -326,7 +360,7 @@ public class Campfire {
 			cGUI.addMessage("Listening to broadcasts on port "+p+" is not allowed", MessageBox.error);
 		}
 	}
-	
+
 	public static int getBroadcastPort() {return broadcastPort;}
 
 	public static void setBroadcastPort(int p) {
@@ -341,9 +375,9 @@ public class Campfire {
 			cGUI.addMessage("Broadcasting on port "+p+" is not allowed", MessageBox.error);
 		}
 	}
-	
+
 	public static boolean isAutoDetectEnabled() {return autoDetect;}
-	
+
 	public static void setAutoDetect(boolean a) {
 		autoDetect = a;
 		if (autoDetect) {
@@ -398,12 +432,14 @@ public class Campfire {
 		connectPort = 5000;
 		broadcastListenPort = 2001;
 		broadcastPort = 2000;
-		intercomName = "";
 		
+		intercomName = getStoredIntercomName();
+		if (intercomName==null) intercomName = "";
+
 		autoDetect = true;
 		isProduction = false;
 	}
-	
+
 	public static boolean isProduction() {return isProduction;}
 
 	public static void main(String[] args) throws Exception {
@@ -414,7 +450,7 @@ public class Campfire {
 				Campfire.setListenPort(5001, false);
 				Campfire.setConnectPort(5000);
 			}
-			else {
+			else if (Integer.parseInt(args[0])==2) {
 				Campfire.setListenPort(5000, false);
 				Campfire.setConnectPort(5001);
 				Campfire.setBroadcastListenPort(2000, false);

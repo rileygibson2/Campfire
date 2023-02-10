@@ -41,7 +41,7 @@ public class GUI extends JPanel {
 	private boolean antiAlias;
 	
 	public final static String baseFont = "Geneva";
-	public final static String logoFont = "neoteric";
+	public final static String logoFont = "seuzone";
 
 	private GUI() {
 		io = IO.getInstance();

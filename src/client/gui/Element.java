@@ -84,14 +84,22 @@ public abstract class Element {
 		components.add(c);
 		componentsLock.unlock();
 	}
+	
 	public void removeComponent(Component c) {
 		componentsLock.lock();
 		components.remove(c);
 		componentsLock.unlock();
 	}
+	
 	public void removeComponents(Collection<Component> toRemove) {
 		componentsLock.lock();
 		components.removeAll(toRemove);
+		componentsLock.unlock();
+	}
+	
+	public void cleanComponents() {
+		componentsLock.lock();
+		components.clear();
 		componentsLock.unlock();
 	}
 

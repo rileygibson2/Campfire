@@ -11,6 +11,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.MultipleGradientPaint.CycleMethod;
 import java.awt.RadialGradientPaint;
 import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -44,17 +45,32 @@ public class ScreenUtils {
 		this.screen = screen;
 		loadFonts();
 	}
-	
+
 	public void loadFonts() {
-        try {
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric.ttf")));
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric-bold.ttf")));
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/aloevera.ttf")));
-            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/blackpast.ttf")));
-        } catch (Exception e) {CLI.error("Error loading fonts - "+e.getMessage());}
+		try {
+			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric.ttf")));
+			//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/neoteric-bold.ttf")));
+			//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/aloevera.ttf")));
+			//            ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/blackpast.ttf")));
+			ge.registerFont(Font.createFont(Font.TRUETYPE_FONT, Utils.getInputStream("assets/fonts/suezone.ttf")));
+		} catch (Exception e) {CLI.error("Error loading fonts - "+e.getMessage());}
 	}
-	
+
+	public double getStringWidthAsPerc(Font f, String s) {
+		FontRenderContext frc = new FontRenderContext(null, true, true);
+		return cWR(f.getStringBounds(s, frc).getWidth());
+		//FontMetrics metrics = g.getFontMetrics(f);
+		//return cWR(metrics.stringWidth(s));
+	}
+
+	public double getStringHeightAsPerc(Font f, String s) {
+		FontRenderContext frc = new FontRenderContext(null, true, true);
+		return cHR(f.getStringBounds(s, frc).getHeight());
+		//FontMetrics metrics = g.getFontMetrics(f);
+		//return cHR(metrics.getHeight());
+	}
+
 	public void drawBase(Graphics2D g) {
 		fillRect(g, GUI.bg, new Rectangle(0, 0, 100, 100));
 	}
@@ -63,7 +79,7 @@ public class ScreenUtils {
 		Rectangle r = l.getRealRec();
 		Color col = new Color(l.col.getRed(), l.col.getGreen(), l.col.getBlue(), percToCol(l.getOpacity()));
 		g.setFont(l.font);
-		
+
 		if (l.isCentered()) drawCenteredString(g, l.font, l.text, col, new Rectangle(r.x, r.y, 1, 1));
 		else drawStringFromPoint(g, l.font, l.text, col, new Point(r.x, r.y));
 	}
@@ -77,7 +93,7 @@ public class ScreenUtils {
 
 	public void drawImage(Graphics2D g, Image i) {
 		Rectangle r = i.getRealRec();
-		
+
 		BufferedImage img = null;
 		try {img = ImageIO.read(Utils.getURL("assets/"+i.src));}
 		catch (IOException | IllegalArgumentException e) {
@@ -85,18 +101,19 @@ public class ScreenUtils {
 			return;
 		}
 		if (i.getOpacity()<100) g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) (i.getOpacity()/100)));
-		
+
 		g.drawImage(img, cW(r.x), cH(r.y), cW(r.width), cH(r.height), null);
-		
+
 		//Reset alpha
 		g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 	}
-	
+
 	public void drawSimpleBox(Graphics2D g, SimpleBox b) {
 		Rectangle r = b.getRealRec();
-		Color col = new Color(b.col.getRed(), b.col.getGreen(), b.col.getBlue(), percToCol(b.getOpacity()));
-		if (b.col.getAlpha()==0) return; //Duck tape fix as this method does net respect the boxe's alpha channel
-		
+		Color col = b.getColor();
+		col = new Color(col.getRed(), col.getGreen(), col.getBlue(), percToCol(b.getOpacity()));
+		if (b.getColor().getAlpha()==0) return; //Duck tape fix as this method does net respect the boxe's alpha channel
+
 		if (b.isOval()) {
 			if (b.isFilled()) fillOval(g, col, r);
 			else drawOval(g, col, r);
@@ -215,7 +232,7 @@ public class ScreenUtils {
 		double rad = r.width;
 		Color start = new Color(b.start.getRed(), b.start.getGreen(), b.start.getBlue(), percToCol(b.getOpacity()));
 		Color end = new Color(b.end.getRed(), b.end.getGreen(), b.end.getBlue(), percToCol(b.getOpacity()));
-		
+
 		//Button
 		for (double i=0; i<rad; i+= 0.1) {
 			Rectangle r1 = new Rectangle(r.x+i/2, r.y+i, rad-i, (rad-i)*2);
@@ -239,7 +256,7 @@ public class ScreenUtils {
 		g.setColor(c);
 		g.drawRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
 	}
-	
+
 	public void fillRect(Graphics2D g, Color c, Rectangle r) {
 		g.setColor(c);
 		g.fillRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
@@ -248,7 +265,7 @@ public class ScreenUtils {
 	public void fillRect(Graphics2D g, Rectangle r) {
 		g.fillRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
 	}
-	
+
 	public void drawRoundRect(Graphics2D g, Color c, Rectangle r) {
 		g.setColor(c);
 		g.drawRoundRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height), 10, 10);
@@ -258,14 +275,14 @@ public class ScreenUtils {
 		g.setColor(c);
 		g.fillRoundRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height), 10, 10);
 	}
-	
+
 	public void fillRoundRect(Graphics2D g, Color c, Rectangle r, int[] corners) {
 		g.setColor(c);
 		g.fillRoundRect(cW(r.x), cH(r.y), cW(r.width), cH(r.height), 10, 10);
-		
+
 		if (corners.length==0) return;
 		List<Integer> cor = Arrays.stream(corners).boxed().collect(Collectors.toList());
-		
+
 		/*
 		 * If a corner is not present then fill out the rounded edge. Corners
 		 * go in anti-clockwise order with 1 being top left and 4 being top right.
@@ -285,12 +302,12 @@ public class ScreenUtils {
 		g.setColor(c);
 		g.fillOval(cW(r.x), cH(r.y), cW(r.width), cH(r.height));
 	}
-	
+
 	public void drawLine(Graphics2D g, Color c, Point p1, Point p2) {
 		g.setColor(c);
 		g.drawLine(cW(p1.x), cH(p1.y), cW(p2.x), cH(p2.y));
 	}
-	
+
 	public void drawCenteredString(Graphics2D g, Font f, String s, Color c, Rectangle r) {
 		FontMetrics metrics = g.getFontMetrics(f);
 		int x = (int) (cW(r.x)+(cW(r.width)-metrics.stringWidth(s))/2);
@@ -299,23 +316,13 @@ public class ScreenUtils {
 		g.setColor(c);
 		g.drawString(s, x, y);
 	}
-	
+
 	public void drawStringFromPoint(Graphics2D g, Font f, String s, Color c, Point p) {
 		FontMetrics metrics = g.getFontMetrics(f);
 		int y = (int) (cH(p.y)+(-metrics.getHeight()/2))+metrics.getAscent();
 		g.setFont(f);
 		g.setColor(c);
 		g.drawString(s, cW(p.x), y);
-	}
-	
-	public double getStringWidthAsPerc(Graphics2D g, Font f, String s) {
-		FontMetrics metrics = g.getFontMetrics(f);
-		return cWR(metrics.stringWidth(s));
-	}
-	
-	public double getStringHeightAsPerc(Graphics2D g, Font f) {
-		FontMetrics metrics = g.getFontMetrics(f);
-		return cHR(metrics.getHeight());
 	}
 
 	public void setGradientLinear(Graphics2D g, Color start, Color end, Rectangle gR) {

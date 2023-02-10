@@ -1,5 +1,9 @@
 package network.messages;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import cli.CLI;
 import general.Pair;
 import general.Triplet;
 import general.Utils;
@@ -45,7 +49,7 @@ public class Message {
 	public Pair<Integer, Integer> splitPorts() {
 		//Check message is capable of containing this data
 		if (code==null||!code.equals(Code.BroadcastAck)) return null;
-		
+
 		Pair<Integer, Integer> ports = new Pair<>();
 		if (data==null) return null; //Info wasnt sent
 		String[] split = data.split(",");
@@ -74,6 +78,21 @@ public class Message {
 		ports.c = Integer.parseInt(split[2].replace("lP=", ""));
 		if (ports.c==null) return null;
 		return ports;
+	}
+
+	public Map<String, String> getPairs() {
+		if (data==null) return null; //Info wasnt sent
+		Map<String, String> pairs = new HashMap<>();
+		
+		String[] split = data.split(",");
+		for (String pair : split) {
+			String[] pSplit = pair.split("=");
+			if (pSplit.length!=2) continue;
+			pairs.put(pSplit[0], pSplit[1]);
+		}
+		
+		if (pairs.isEmpty()) return null;
+		return pairs;
 	}
 
 	@Override

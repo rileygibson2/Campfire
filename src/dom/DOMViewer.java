@@ -81,8 +81,8 @@ public class DOMViewer extends JPanel {
 		Point yBound = new Point((100/maxDepth)*depth, (100/maxDepth)*(depth+1));
 		
 		
-		double w = screenUtils.getStringWidthAsPerc(g, f, node.getLabel())+2;
-		double h = screenUtils.getStringHeightAsPerc(g, f)+2;;
+		double w = screenUtils.getStringWidthAsPerc(f, node.getLabel())+2;
+		double h = screenUtils.getStringHeightAsPerc(f, node.getLabel())+2;;
 		double x = xBound.x+((xBound.y-xBound.x)/2)-(w/2);
 		double y = yBound.x+((yBound.y-yBound.x)/2)-(h/2);
 		

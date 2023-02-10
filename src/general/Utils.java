@@ -1,7 +1,11 @@
 package general;
 
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.sound.sampled.AudioFormat;
 

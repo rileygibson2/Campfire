@@ -23,6 +23,7 @@ public abstract class Component extends Element {
 	private boolean hasShadow;
 	private boolean freezeShadow; //Stops shadow being updated with position changes
 	private Rectangle shadowR;
+	private String testName;
 
 	public Component(Rectangle r) {
 		super (r);
@@ -36,6 +37,9 @@ public abstract class Component extends Element {
 		priority = 1;
 		opacity = 100;
 	}
+	
+	public String getTestName() {return testName;}
+	public void setTestName(String testName) {this.testName = testName;}
 
 	public void setClickAction(Runnable r) {this.onClick = r;}
 	public void setHoverAction(Runnable r) {this.onHover = r;}

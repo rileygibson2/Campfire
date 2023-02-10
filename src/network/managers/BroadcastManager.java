@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import cli.CLI;
@@ -103,18 +104,34 @@ public class BroadcastManager extends AbstractManager {
 
 						switch (m.getCode()) {
 						case Broadcast:
-							byte[] r = new Message(Code.BroadcastAck, "cP="+Campfire.getConnectPort()+",lP="+Campfire.getListenPort()).formatBytes();
+							Message message;
+							if (Campfire.getIntercomName()!=null) message = new Message(Code.BroadcastAck, "cP="+Campfire.getConnectPort()+",lP="+Campfire.getListenPort()+",n="+Campfire.getIntercomName());
+							else message = new Message(Code.BroadcastAck, "cP="+Campfire.getConnectPort()+",lP="+Campfire.getListenPort());
+							
+							byte[] r = message.formatBytes();
 							DatagramPacket response = new DatagramPacket(r, r.length, InetAddress.getByName("255.255.255.255"), Campfire.getBroadcastListenPort());
 							new DatagramSocket().send(response);
 							break;
 
 						case BroadcastAck:
 							if (CLI.isVerbose()) CLI.debug("Recieved from "+recieved.getAddress().getHostAddress()+": "+m.toString());
-							Pair<Integer, Integer> ports = m.splitPorts();
-
-							//Check ports match before adding potential client
-							if (ports.a!=Campfire.getListenPort()||ports.b!=Campfire.getConnectPort()) break;
-							addPotentialClient(new Client(recieved.getAddress(), ports.a, ports.b));
+							Map<String, String> pairs = m.getPairs();
+							if (CLI.isVerbose()) CLI.debug(pairs);
+							//Verify data
+							if (pairs==null) break;
+							int cP, lP;
+							try {
+								cP = Integer.parseInt(pairs.get("cP"));
+								if (cP!=Campfire.getListenPort()) break;
+								
+								lP = Integer.parseInt(pairs.get("lP"));
+								if (lP!=Campfire.getConnectPort()) break;
+							}
+							catch (NumberFormatException e) {break;}
+							
+							//Ports match so add as potential client
+							if (pairs.get("n")!=null) addPotentialClient(new Client(recieved.getAddress(), cP, lP, pairs.get("n")));
+							else addPotentialClient(new Client(recieved.getAddress(), cP, lP));
 							break;
 
 						default:
@@ -147,9 +164,9 @@ public class BroadcastManager extends AbstractManager {
 					Set<Client> toRemove = new HashSet<>();
 					for (Client c : potentialClients) {
 						if (c.isExpired()
-							|| c.getConnectPort()!=Campfire.getListenPort()
-							|| c.getListenPort()!=Campfire.getConnectPort()
-							|| c.failedRecently()) {
+								|| c.getConnectPort()!=Campfire.getListenPort()
+								|| c.getListenPort()!=Campfire.getConnectPort()
+								|| c.failedRecently()) {
 							toRemove.add(c);
 						}
 					}
@@ -165,14 +182,13 @@ public class BroadcastManager extends AbstractManager {
 					if (Campfire.isAutoDetectEnabled()&&toRemove.contains(Campfire.getClient())) {
 						Campfire.setClient(Client.nullClient);
 					}
-
 					potentialClients.removeAll(toRemove);
-					
-					
+
+
 					//Handle multiple clients button
 					if (potentialClients.size()>0) HomeView.getInstance().showUsersButton();
 					else HomeView.getInstance().hideUsersButton();
-					
+
 					iterate();
 				}
 			}
@@ -189,9 +205,12 @@ public class BroadcastManager extends AbstractManager {
 		for (Client p : potentialClients) {
 			if (p.equals(pC)) {
 				p.resetTimestamp(); //So to give more time to this client
+				p.setName(pC.getName()); //To catch name updates without messing with client
 				return;
 			}
 		}
+		
+		if (pC.equals(Campfire.getClient())) Campfire.getClient().setName(pC.getName()); //To catch name updates without messing with Intercom's client
 		potentialClients.add(pC);
 	}
 

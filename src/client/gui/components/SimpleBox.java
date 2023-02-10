@@ -10,7 +10,7 @@ import general.Rectangle;
 
 public class SimpleBox extends Component {
 
-	public Color col;
+	private Color col;
 	private boolean filled;
 	private boolean rounded;
 	private boolean oval;
@@ -31,6 +31,9 @@ public class SimpleBox extends Component {
 		rounded = false;
 		oval = false;
 	}
+	
+	public Color getColor() {return col;}
+	public void setColor(Color c) {col = c;}
 	
 	public void setFilled(boolean f) {filled = f;}
 	public boolean isFilled() {return filled;}

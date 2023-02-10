@@ -28,11 +28,9 @@ public class Button extends Component {
 		mainBox.addComponent(c);
 	}
 	
-	public Color getColor() {return mainBox.col;}
+	public Color getColor() {return mainBox.getColor();}
 	
-	public void setColor(Color col) {
-		mainBox.col = col;
-	}
+	public void setColor(Color col) {mainBox.setColor(col);}
 	
 	public void setOval(boolean o) {mainBox.setOval(o);}
 

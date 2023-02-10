@@ -58,8 +58,8 @@ public class HomeView extends View {
 		super(ViewType.Home, new Rectangle(0, 0, 100, 100));
 
 		//Main label
-		addComponent(new Label(new Point(85, 93), "Campfire", new Font(GUI.logoFont, Font.BOLD, 16), new Color(180, 180, 180)));
-		addComponent(new Image(new Rectangle(89, 77, 5, 12), "logo.png").setOpacity(70));
+		addComponent(new Label(new Point(86, 93), "Campfire", new Font(GUI.logoFont, Font.BOLD, 11), new Color(150, 150, 150)));
+		addComponent(new Image(new Rectangle(89, 77, 5, 12), "logo.png").setOpacity(60));
 
 		//Main button
 		Button b = new GradientButton(new Rectangle(43, 36, 14, 28), new Color(89, 141, 19), new Color(112, 255, 12));
@@ -74,13 +74,13 @@ public class HomeView extends View {
 		clients.setOval(true);
 		clients.setClickAction(() -> {
 			PopUp p = new PopUp("Pick Your Intercom", new Point(50, 50));
-			
+
 			DropDown<Client> d = new DropDown<Client>(new Rectangle(15, 38, 70, 25));
 			d.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
 			p.addPopUpComponent(d);
 
 			//Actions
-			d.setSelected(new AbstractMap.SimpleEntry<String, Client>(Campfire.getClient().getIP(), Campfire.getClient()));
+			d.setSelected(new AbstractMap.SimpleEntry<String, Client>(Campfire.getClient().getTitle(), Campfire.getClient()));
 			d.setActions(new GetterSubmitter<LinkedHashMap<String, Client>, Client>() {
 				public void submit(Client c) {
 					Campfire.setClient(c);
@@ -88,11 +88,13 @@ public class HomeView extends View {
 
 				public LinkedHashMap<String, Client> get() {
 					LinkedHashMap<String, Client> result = new LinkedHashMap<>();
-					for (Client c : BroadcastManager.getPotentialClients()) result.put(c.getIP(), c);
+					for (Client c : BroadcastManager.getPotentialClients()) {
+						result.put(c.getTitle(), c);
+					}
 					return result;
 				}
 			});
-			
+
 			p.increasePriority();
 			addComponent(p);
 		});
@@ -119,7 +121,7 @@ public class HomeView extends View {
 			Label l = new Label(new Point(50, 50), "", new Font(GUI.baseFont, Font.BOLD, 16), new Color(230, 230, 230)) {
 				@Override
 				public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
-					if (NetworkManager.getLinkManager().isProbablyLinked()) text = "Currently connected";
+					if (NetworkManager.getLinkManager()!=null&&NetworkManager.getLinkManager().isProbablyLinked()) text = "Currently connected";
 					else text = "Currently disconnected";
 					super.draw(g);
 				}
@@ -145,7 +147,7 @@ public class HomeView extends View {
 		Image linkImage = new Image(new Rectangle(23, 20, 50, 55), "") {
 			@Override
 			public void draw(Graphics2D g) { //Overriden to catch link status before being drawn
-				if (NetworkManager.getLinkManager().isProbablyLinked()) src = "connected.png";
+				if (NetworkManager.getLinkManager()!=null&&NetworkManager.getLinkManager().isProbablyLinked()) src = "connected.png";
 				else src = "disconnected.png";
 				super.draw(g);
 			}
@@ -168,12 +170,12 @@ public class HomeView extends View {
 
 				if (aM.getVolume()<5) {
 					aM.setVolume(0);
-					mute.col = new Color(200, 100, 100);
+					mute.setColor(new Color(200, 100, 100));
 					i.src = "muted.png";
 					aM.mute();
 				}
 				else {
-					mute.col = GUI.fg;
+					mute.setColor(GUI.fg);
 					i.src = "unmuted.png";
 					aM.unmute();
 				}
@@ -292,114 +294,118 @@ public class HomeView extends View {
 	public void createSettings(Button settings) {
 		settings.setClickAction(() -> {
 			PopUp p = new PopUp("Settings", new Point(80, 80));
-			
-			//Tabs
-			SimpleBox tab = new SimpleBox(new Rectangle(0, 2.5, 20, 13), GUI.fg);
-			tab.setClickAction(() -> CLI.debug("AA"));
-			tab.setRounded(new int[] {1, 4});
-			Label l = new Label(new Point(50, 50), "Network", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220));
-			l.setCentered(true);
-			tab.addComponent(l);
-			p.addPopUpComponent(tab);
-			
-			tab = new SimpleBox(new Rectangle(20, 2.5, 15, 13), GUI.focus2);
-			tab.setClickAction(() -> {
-				CLI.debug("AA");
-			});
-			tab.setRounded(new int[] {1, 4});
-			l = new Label(new Point(50, 50), "Audio", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220));
-			l.setCentered(true);
-			tab.addComponent(l);
-			p.addPopUpComponent(tab);
+			p.addTab("Intercom", () -> openIntercomTab(p));
+			p.addTab("Network", () -> openNetworkTab(p));
 
-			double x = 6;
-			double y = 25;
-			
-			//Audio input dropdown
-			p.addPopUpComponent(new Label(new Point(x, y), "Microphone", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
-			audioIn = new DropDown<>(new Rectangle(x, y+6, 40, 15));
-			audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
-			p.addPopUpComponent(audioIn);
-
-			//Actions
-			audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
-			audioIn.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
-				public void submit(Mixer.Info s) {
-					AudioManager.getInstance().setMicLineInfo(s);
-				}
-
-				public LinkedHashMap<String, Info> get() {
-					return AudioManager.getInstance().listMicrophones();
-				}
-			});
-
-			//Audio output dropdown
-			y += 30;
-			p.addPopUpComponent(new Label(new Point(x, y), "Speaker", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
-			audioOut = new DropDown<Mixer.Info>(new Rectangle(x, y+6, 40, 15));
-			audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
-			p.addPopUpComponent(audioOut);
-
-			//Actions
-			audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
-			audioOut.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
-				public void submit(Mixer.Info s) {
-					AudioManager.getInstance().setSpeakerLineInfo(s);
-				}
-
-				public LinkedHashMap<String, Info> get() {
-					return AudioManager.getInstance().listSpeakers();
-				}
-			});
-
-			//Connect port textbox
-			x = 55;
-			y = 25;
-			p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
-			TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getConnectPort());
-			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Campfire.setConnectPort(s);}
-				public String get() {return ""+Campfire.getConnectPort();}
-			});
-			p.addPopUpComponent(t);
-
-			//Listen port textbox
-			y += 30;
-			p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
-			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getListenPort());
-			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Campfire.setListenPort(s, true);}
-				public String get() {return ""+Campfire.getListenPort();}
-			});
-			p.addPopUpComponent(t);
-			
-			//Name textbox
-			y += 30;
-			p.addPopUpComponent(new Label(new Point(x, y), "Station Name", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
-			t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getIntercomName());
-			t.setActions(new GetterSubmitter<String, String>() {
-				public void submit(String s) {Campfire.setIntercomName(s);}
-				public String get() {return ""+Campfire.getIntercomName();}
-			});
-			p.addPopUpComponent(t);
-			
-			//Anti aliasing checkbox
-			x = 7;
-			y = 88.5;
-			p.addPopUpComponent(new Label(new Point(x+6, y), "Anti Aliasing", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180)));
-			CheckBox cB = new CheckBox(new Rectangle(x, y+0.5, 4, 8));
-			cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
-				public void submit(Boolean b) {GUI.getInstance().setAntiAliasing(b);}
-				public Boolean get() {return GUI.getInstance().getAntiAliasing();}
-			});
-			p.addPopUpComponent(cB);
-			
-			//Finish up
-			p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
-			p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
-			p.increasePriority();
-			addComponent(p);
+			openIntercomTab(p);
 		});
+	}
+
+	public void openNetworkTab(PopUp p) {
+		p.cleanPopupComponents();
+		double x = 6;
+		double y = 25;
+
+		//Connect port textbox
+		p.addPopUpComponent(new Label(new Point(x, y), "Connect Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+		TextBox t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getConnectPort());
+		t.setActions(new GetterSubmitter<String, String>() {
+			public void submit(String s) {Campfire.setConnectPort(s);}
+			public String get() {return ""+Campfire.getConnectPort();}
+		});
+		p.addPopUpComponent(t);
+
+		//Listen port textbox
+		y += 30;
+		p.addPopUpComponent(new Label(new Point(x, y), "Listen Port", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getListenPort());
+		t.setActions(new GetterSubmitter<String, String>() {
+			public void submit(String s) {Campfire.setListenPort(s, true);}
+			public String get() {return ""+Campfire.getListenPort();}
+		});
+		p.addPopUpComponent(t);
+
+		//Auto detect checkbox
+		x += 2;
+		y += 28;
+		p.addPopUpComponent(new Label(new Point(x+5.5, y+4.5), "Auto Detect", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180)));
+		CheckBox cB = new CheckBox(new Rectangle(x, y, 4, 8));
+		cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
+			public void submit(Boolean b) {Campfire.setAutoDetect(b);}
+			public Boolean get() {return Campfire.isAutoDetectEnabled();}
+		});
+		p.addPopUpComponent(cB);
+
+		//Name textbox
+		x = 50;
+		y = 25;
+		p.addPopUpComponent(new Label(new Point(x, y), "Station Name", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+		t = new TextBox(new Rectangle(x, y+6, 40, 15), ""+Campfire.getIntercomName());
+		t.setActions(new GetterSubmitter<String, String>() {
+			public void submit(String s) {Campfire.setIntercomName(s);}
+			public String get() {return ""+Campfire.getIntercomName();}
+		});
+		p.addPopUpComponent(t);
+	}
+
+	public void openIntercomTab(PopUp p) {
+		p.cleanPopupComponents();
+		double x = 6;
+		double y = 25;
+
+		//Audio input dropdown
+		p.addPopUpComponent(new Label(new Point(x, y), "Microphone", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+		audioIn = new DropDown<>(new Rectangle(x, y+6, 40, 15));
+		audioIn.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+		p.addPopUpComponent(audioIn);
+
+		//Actions
+		audioIn.setSelected(AudioManager.getInstance().getDefaultMic());
+		audioIn.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+			public void submit(Mixer.Info s) {
+				AudioManager.getInstance().setMicLineInfo(s);
+			}
+
+			public LinkedHashMap<String, Info> get() {
+				return AudioManager.getInstance().listMicrophones();
+			}
+		});
+
+		//Audio output dropdown
+		y += 30;
+		p.addPopUpComponent(new Label(new Point(x, y), "Speaker", new Font(GUI.baseFont, Font.BOLD, 14), new Color(220, 220, 220)));
+		audioOut = new DropDown<Mixer.Info>(new Rectangle(x, y+6, 40, 15));
+		audioOut.addComponent(new Image(new Rectangle(85, 25, 8, 50), "closedselector.png"));
+		p.addPopUpComponent(audioOut);
+
+		//Actions
+		audioOut.setSelected(AudioManager.getInstance().getDefaultSpeaker());
+		audioOut.setActions(new GetterSubmitter<LinkedHashMap<String, Mixer.Info>, Mixer.Info>() {
+			public void submit(Mixer.Info s) {
+				AudioManager.getInstance().setSpeakerLineInfo(s);
+			}
+
+			public LinkedHashMap<String, Info> get() {
+				return AudioManager.getInstance().listSpeakers();
+			}
+		});
+
+		//Anti aliasing checkbox
+		x = 55;
+		y = 30;
+		p.addPopUpComponent(new Label(new Point(x+5.5, y+4.5), "Anti Aliasing", new Font(GUI.baseFont, Font.BOLD, 13), new Color(180, 180, 180)));
+		CheckBox cB = new CheckBox(new Rectangle(x, y, 4, 8));
+		cB.setActions(new GetterSubmitter<Boolean, Boolean>() {
+			public void submit(Boolean b) {GUI.getInstance().setAntiAliasing(b);}
+			public Boolean get() {return GUI.getInstance().getAntiAliasing();}
+		});
+		p.addPopUpComponent(cB);
+
+		//Finish up
+		p.setCloseButtonPos(p.getX()+p.getWidth()*0.81, p.getY()+p.getHeight()*0.83);
+		p.setAcceptButtonPos(p.getX()+p.getWidth()*0.90, p.getY()+p.getHeight()*0.83);
+		p.increasePriority();
+		addComponent(p);
 	}
 
 	public void buttonHoverAction(Button b, boolean hoverOn) {

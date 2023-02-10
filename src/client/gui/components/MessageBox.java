@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import client.gui.GUI;
+import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
 import threads.AnimationFactory;
@@ -23,7 +24,6 @@ public class MessageBox extends Component {
 	
 	private SimpleBox mainBox;
 	private Label label;
-	private boolean sizeSet;
 	private ThreadController move;
 	private ThreadController fade;
 	private double goalY;
@@ -32,7 +32,6 @@ public class MessageBox extends Component {
 
 	public MessageBox(String text, Color col, double goalY, int hold) {
 		super(new Rectangle(50, -15, 10, 10));
-		sizeSet = false;
 		this.goalY = goalY;
 		this.hold = hold;
 
@@ -52,6 +51,24 @@ public class MessageBox extends Component {
 		label.setCentered(true);
 		mainBox.addComponent(label);
 		
+		double w = GUI.getInstance().getScreenUtils().getStringWidthAsPerc(label.font, label.text)+5;
+		double h = GUI.getInstance().getScreenUtils().getStringHeightAsPerc(label.font, label.text)+5;
+		setX((100-w)/2);
+		setWidth(w);
+		setHeight(h);
+		
+		fade = AnimationFactory.getAnimation(this, Animations.Fade, 100);
+		fade.start();
+		move = AnimationFactory.getAnimation(this, Animations.MoveTo, new Point(getX(), goalY));
+		move.setFinishAction(() -> {
+			move.sleep(hold);
+			GUI.getInstance().removeMessage(this);
+			fade = AnimationFactory.getAnimation(this, Animations.Fade, 0);
+			fade.setFinishAction(() -> removeFromParent());
+			fade.start();
+		});
+		move.start();
+		
 		setOpacity(0);
 	}
 	
@@ -64,31 +81,5 @@ public class MessageBox extends Component {
 			move = AnimationFactory.getAnimation(this, Animations.MoveTo, new Point(getX(), goalY));
 			move.start();
 		}
-	}
-
-	@Override
-	public void draw(Graphics2D g) {
-		if (!sizeSet) {
-			double w = GUI.getInstance().getScreenUtils().getStringWidthAsPerc(g, label.font, label.text)+5;
-			double h = GUI.getInstance().getScreenUtils().getStringHeightAsPerc(g, label.font)+5;
-			setX((100-w)/2);
-			setWidth(w);
-			setHeight(h);
-			
-			fade = AnimationFactory.getAnimation(this, Animations.Fade, 100);
-			fade.start();
-			move = AnimationFactory.getAnimation(this, Animations.MoveTo, new Point(getX(), goalY));
-			move.setFinishAction(() -> {
-				move.sleep(hold);
-				GUI.getInstance().removeMessage(this);
-				fade = AnimationFactory.getAnimation(this, Animations.Fade, 0);
-				fade.setFinishAction(() -> removeFromParent());
-				fade.start();
-			});
-			move.start();
-			
-			sizeSet = true;
-		}
-		super.draw(g);
 	}
 }

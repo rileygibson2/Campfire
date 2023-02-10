@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
+import client.gui.components.Component;
 import general.Pair;
 
 public class CLI {
@@ -70,17 +71,23 @@ public class CLI {
 		initialised = true;
 	}
 
-	public static void debug(String message) {
+	public static void debug(Object message) {
 		if (!initialised) initialise();
-		CLIMessage m = new CLIMessage(getCallerClassName(), message);
+		String mess;
+		if (message==null) mess = "null";
+		else mess = message.toString();
+		CLIMessage m = new CLIMessage(getCallerClassName(), mess);
 
 		System.out.println(m.formatForConsole());
 		cliV.print(m);
 	}
 
-	public static void error(String message) {
+	public static void error(Object message) {
 		if (!initialised) initialise();
-		CLIMessage m = new CLIMessage(getCallerClassName(), message);
+		String mess;
+		if (message==null) mess = "null";
+		else mess = message.toString();
+		CLIMessage m = new CLIMessage(getCallerClassName(), mess);
 		m.setError();
 
 		System.out.println(m.formatForConsole());

@@ -106,7 +106,10 @@ public class LinkManager extends AbstractManager {
 	protected static void updateLinkStatus(boolean linked) {
 		//Show message for change of link status
 		if (linked!=isProbablyLinked) {
-			if (linked) GUI.getInstance().addMessage("Intercom connected", MessageBox.update);
+			if (linked) {
+				if (Campfire.getClient().hasName()) GUI.getInstance().addMessage("Connected to "+Campfire.getClient().getName(), MessageBox.update);
+				else GUI.getInstance().addMessage("Intercom connected", MessageBox.update);
+			}
 			else GUI.getInstance().addMessage("Intercom disconnected", MessageBox.update);
 		}
 		isProbablyLinked = linked;

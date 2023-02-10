@@ -78,7 +78,7 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 
 		//Account for messages overflowing screen
 		double y = 2;
-		double totalY = screenUtils.getStringHeightAsPerc(g2, f)*stack.size();
+		double totalY = screenUtils.getStringHeightAsPerc(f, "Hello World")*stack.size();
 		if (totalY>100) y -= (totalY-100);
 
 		//Verify start positions
@@ -99,22 +99,22 @@ public class CLIViewer extends JPanel implements KeyListener, MouseWheelListener
 		for (CLIMessage m : stack) {
 			if (y>=100) return;
 			String header = m.formatHeader();
-			double hP = screenUtils.getStringWidthAsPerc(g2, f, header);
+			double hP = screenUtils.getStringWidthAsPerc(f, header);
 
 			//Update maxWidth
-			double w = screenUtils.getStringWidthAsPerc(g2, f, header+ " "+m.message);
+			double w = screenUtils.getStringWidthAsPerc(f, header+ " "+m.message);
 			if (w>maxWidth) maxWidth = w;
 
 			screenUtils.drawStringFromPoint(g2, f, header, m.color, new Point(xAdj, y));
-			screenUtils.drawStringFromPoint(g2, f, " "+m.message, Color.GREEN, new Point(hP+xAdj, y));
+			screenUtils.drawStringFromPoint(g2, f, "  "+m.message, Color.GREEN, new Point(hP+xAdj, y));
 
-			y += screenUtils.getStringHeightAsPerc(g2, f);
+			y += screenUtils.getStringHeightAsPerc(f, header);
 		}
 
 		//Verbose symbol
 		if (CLI.isVerbose()) {
-			double w = screenUtils.getStringWidthAsPerc(g2, f, "Verbose")+3;
-			double h = screenUtils.getStringHeightAsPerc(g2, f)+3;
+			double w = screenUtils.getStringWidthAsPerc(f, "Verbose")+3;
+			double h = screenUtils.getStringHeightAsPerc(f, "Verbose")+3;
 			screenUtils.fillRoundRect(g2, new Color(255, 80, 80), new Rectangle(100-w-5, 2, w, h));
 			screenUtils.drawCenteredString(g2, f, "Verbose", Color.WHITE, new Rectangle(100-w-5, 2, w, h));
 		}
