@@ -13,7 +13,6 @@ import java.util.Set;
 import cli.CLI;
 import client.Campfire;
 import client.gui.views.HomeView;
-import general.Pair;
 import network.Client;
 import network.messages.Code;
 import network.messages.Message;

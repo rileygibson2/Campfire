@@ -4,7 +4,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import client.Campfire;
 import client.gui.IO;
 
 public class ThreadController extends Thread {

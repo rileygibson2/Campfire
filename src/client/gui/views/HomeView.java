@@ -11,7 +11,6 @@ import javax.sound.sampled.Line;
 import javax.sound.sampled.Mixer;
 import javax.sound.sampled.Mixer.Info;
 
-import cli.CLI;
 import client.AudioManager;
 import client.Campfire;
 import client.Special.Type;

@@ -2,12 +2,10 @@ package client.gui.components;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics2D;
 import java.util.ArrayList;
 import java.util.List;
 
 import client.gui.GUI;
-import client.gui.ScreenUtils;
 import general.Point;
 import general.Rectangle;
 import threads.AnimationFactory;
@@ -26,14 +24,10 @@ public class MessageBox extends Component {
 	private Label label;
 	private ThreadController move;
 	private ThreadController fade;
-	private double goalY;
-	private int hold;
 	
 
 	public MessageBox(String text, Color col, double goalY, int hold) {
 		super(new Rectangle(50, -15, 10, 10));
-		this.goalY = goalY;
-		this.hold = hold;
 
 		//Smother
 		/*SimpleBox smother = new SimpleBox(new Rectangle(0, 0, 100, 100), new Color(0, 0, 0));

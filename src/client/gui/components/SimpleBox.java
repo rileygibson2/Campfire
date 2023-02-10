@@ -3,9 +3,7 @@ package client.gui.components;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-import cli.CLI;
 import client.gui.GUI;
-import general.Point;
 import general.Rectangle;
 
 public class SimpleBox extends Component {

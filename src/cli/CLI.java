@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
-import client.gui.components.Component;
 import general.Pair;
 
 public class CLI {
