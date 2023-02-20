@@ -6,6 +6,7 @@ import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -266,7 +267,7 @@ public class Campfire {
 			Path filePath = Paths.get(url.toURI());
 			Files.write(filePath, getIntercomName().getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 			CLI.debug("Intercom name sucessfully stored in persistency");
-		} catch (IOException | URISyntaxException e) {CLI.error("Could not persistantly store intercom name - "+e.getMessage());}
+		} catch (IOException | URISyntaxException | FileSystemNotFoundException e) {CLI.error("Could not persistantly store intercom name - "+e.getMessage());}
 	}
 
 	public String getStoredIntercomName() {
@@ -277,7 +278,7 @@ public class Campfire {
 			String name =  new String(Files.readAllBytes(filePath));
 			CLI.debug("Intercom name sucessfully read from persistency");
 			return name;
-		} catch (IOException | URISyntaxException e) {CLI.error("Could not read stored intercom name from persistency - "+e.getMessage());}
+		} catch (IOException | URISyntaxException | FileSystemNotFoundException e) {CLI.error("Could not read stored intercom name from persistency - "+e.getMessage());}
 		return null;
 	}
 
